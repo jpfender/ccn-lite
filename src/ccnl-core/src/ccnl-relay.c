@@ -539,7 +539,8 @@ ccnl_content_remove(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 }
 
 struct ccnl_content_s*
-ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
+ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c,
+                       qos_traffic_class_t *tclass)
 {
     struct ccnl_content_s *cit;
     char s[CCNL_MAX_PREFIX_SIZE];
@@ -556,8 +557,13 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
         }
     }
 
+#ifdef CCNL_RIOT
+    if (ccnl->max_cache_entries > 0 &&
+        ccnl->contentcnt >= ccnl->max_cache_entries && !cache_strategy_remove(ccnl, c, tclass)) {
+#else
     if (ccnl->max_cache_entries > 0 &&
         ccnl->contentcnt >= ccnl->max_cache_entries) { // remove oldest content
+#endif
         struct ccnl_content_s *c2, *oldest = NULL;
         uint32_t age = 0;
         for (c2 = ccnl->contents; c2; c2 = c2->next) {
@@ -999,7 +1005,7 @@ ccnl_cs_add(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 {
     struct ccnl_content_s *content;
 
-    content = ccnl_content_add2cache(ccnl, c);
+    content = ccnl_content_add2cache(ccnl, c, NULL);
     if (content) {
         ccnl_content_serve_pending(ccnl, content);
         return 0;

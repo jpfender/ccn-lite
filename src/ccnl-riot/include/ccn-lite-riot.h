@@ -35,6 +35,8 @@
 #include "evtimer.h"
 #include "evtimer_msg.h"
 
+#include "pkt-qos.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -165,7 +167,8 @@ extern evtimer_msg_t ccnl_evtimer;
  * @brief Function pointer type for caching strategy function
  */
 typedef int (*ccnl_cache_strategy_func)(struct ccnl_relay_s *relay,
-                                        struct ccnl_content_s *c);
+                                        struct ccnl_content_s *c,
+                                        qos_traffic_class_t *tclass);
 
 /**
  * @brief   Start the main CCN-Lite event-loop
@@ -223,7 +226,7 @@ int ccnl_send_interest(struct ccnl_prefix_s *prefix,
 int ccnl_wait_for_chunk(void *buf, size_t buf_len, uint64_t timeout);
 
 /**
- * @brief Set a function to control the caching strategy
+ * @brief Set a function to control the cache replacement strategy
  *
  * The given function will be called if the cache is full and a new content
  * chunk arrives. It shall remove (at least) one entry from the cache.
@@ -236,6 +239,33 @@ int ccnl_wait_for_chunk(void *buf, size_t buf_len, uint64_t timeout);
  *                  the cache is full.
  */
 void ccnl_set_cache_strategy_remove(ccnl_cache_strategy_func func);
+
+/**
+ * @brief Set a function to control the caching decision strategy
+ *
+ * The given function will be called when a new content chunk arrives.
+ * It decides whether or not to cache the new content.
+ *
+ * If the return value of @p func is 1, the content chunk will be cached;
+ * otherwise, it will be discarded. If no caching decision strategy is
+ * implemented, all content chunks will be cached.
+ *
+ * @param[in] func  The function to be called for an incoming content
+ *                  chunk.
+ */
+void ccnl_set_cache_strategy_cache(ccnl_cache_strategy_func func);
+
+/**
+ * @brief May be defined for a particular cache replacement strategy
+ */
+int cache_strategy_remove(struct ccnl_relay_s *relay, struct ccnl_content_s *c,
+                          qos_traffic_class_t *tclass);
+
+/**
+ * @brief May be defined for a particular caching decision strategy
+ */
+int cache_strategy_cache(struct ccnl_relay_s *relay, struct ccnl_content_s *c,
+                         qos_traffic_class_t *tclass);
 
 /**
  * @brief Send a message to the CCN-lite thread to add @p to the content store
