@@ -88,6 +88,13 @@
 #define NDN_TLV_NdnlpFragment           0x52
 #define NDN_TLV_Frag_BeginEndFields     0x5c
 
+#ifdef CACHING_ABC
+// ABC TLVs
+#define NDN_TLV_Centrality              0x60
+#define NDN_TLV_CentralityVal           0x61
+#define NDN_TLV_CentralitySrc           0x62
+#endif //CACHING_ABC
+
 // reserved values:
 /*
 Values          Designation
@@ -128,6 +135,9 @@ struct ccnl_ndntlv_interest_opts_s {
     uint8_t mustbefresh;           /**< MustBeFresh Selector */
     /* Guiders */
     uint32_t interestlifetime;  /**< Interest Lifetime Guider */
+#ifdef CACHING_ABC
+    uint8_t centrality;
+#endif //CACHING_ABC
 };
 
 /**
@@ -139,6 +149,9 @@ struct ccnl_ndntlv_data_opts_s {
     /* FinalBlockID is actually from type NameComponent.
      * Use integer for simplicity for now */
     uint32_t finalblockid;          /**< final block ID */
+#ifdef CACHING_ABC
+    uint8_t centrality;
+#endif //CACHING_ABC
 };
 
 #ifdef USE_SUITE_NDNTLV

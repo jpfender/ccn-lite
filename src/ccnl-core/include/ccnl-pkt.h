@@ -83,6 +83,9 @@ struct ccnl_pktdetail_ndntlv_s {
     uint64_t interestlifetime;     /**< interest lifetime */
     /* Data */
     uint64_t freshnessperiod;      /**< defines how long a node has to wait (after the arrival of this data before) marking it “non-fresh” */
+#ifdef CACHING_ABC
+    uint8_t centrality;
+#endif
 };
 
 struct ccnl_pkt_s {

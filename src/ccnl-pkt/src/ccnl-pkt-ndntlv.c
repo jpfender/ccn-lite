@@ -115,10 +115,11 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
 #endif
 
 
-    DEBUGMSG(DEBUG, "ccnl_ndntlv_bytes2pkt len=%zu\n", *datalen);
+    printf("ccnl_ndntlv_bytes2pkt len=%zu\n", *datalen);
 
     pkt = (struct ccnl_pkt_s*) ccnl_calloc(1, sizeof(struct ccnl_pkt_s));
     if (!pkt) {
+        printf("ccnl_ndntlv_bytes2pkt: ccnl_calloc failed\n");
         return NULL;
     }
     pkt->type = pkttype;
@@ -139,7 +140,7 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
         break;
 #endif
     default:
-        DEBUGMSG(INFO, "  ndntlv: unknown packet type %llu\n", (unsigned long long)pkttype);
+        printf("  ndntlv: unknown packet type %llu\n", (unsigned long long)pkttype);
         goto Bail;
     }
 
@@ -158,11 +159,12 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
         switch (typ) {
         case NDN_TLV_Name:
             if (prefix) {
-                DEBUGMSG(WARNING, " ndntlv: name already defined\n");
+                printf(" ndntlv: name already defined\n");
                 goto Bail;
             }
             prefix = ccnl_prefix_new(CCNL_SUITE_NDNTLV, CCNL_MAX_NAME_COMP);
             if (!prefix) {
+                printf("ccnl_ndntlv_bytes2pkt: ccnl_prefix_new failed\n");
                 goto Bail;
             }
             prefix->compcnt = 0;
@@ -172,6 +174,7 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
             prefix->nameptr = start + oldpos;
             while (len2 > 0) {
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
+                    printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                     goto Bail;
                 }
                 if (typ == NDN_TLV_NameComponent &&
@@ -183,6 +186,7 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
                         // it is implemented for encode, the decode is not yet implemented
                         chunknum = ccnl_ndntlv_nonNegInt(cp + 1, i - 1);
                         if (chunknum > UINT32_MAX) {
+                            printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_nonNegInt failed\n");
                             goto Bail;
                         }
                         *prefix->chunknum = (uint32_t) chunknum;
@@ -195,11 +199,12 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
                 len2 -= i;
             }
             prefix->namelen = *data - prefix->nameptr;
-            DEBUGMSG(DEBUG, "  check interest type\n");
+            printf("  check interest type\n");
             break;
         case NDN_TLV_Selectors:
             while (len2 > 0) {
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
+                    printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                     goto Bail;
                 }
                 switch(typ) {
@@ -214,7 +219,7 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
                     pkt->s.ndntlv.mbf = 1;
                     break;
                 case NDN_TLV_Exclude:
-                    DEBUGMSG(WARNING, "'Exclude' field ignored\n");
+                    printf("'Exclude' field ignored\n");
                     break;
                 default:
                     break;
@@ -237,24 +242,27 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
         case NDN_TLV_MetaInfo:
             while (len2 > 0) {
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
+                    printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                     goto Bail;
                 }
                 if (typ == NDN_TLV_ContentType) {
                     // Not used
                     // = ccnl_ndntlv_nonNegInt(cp, i);
-                    DEBUGMSG(WARNING, "'ContentType' field ignored\n");
+                    printf("'ContentType' field ignored\n");
                 }
                 if (typ == NDN_TLV_FreshnessPeriod) {
                     pkt->s.ndntlv.freshnessperiod = ccnl_ndntlv_nonNegInt(cp, i);
                 }
                 if (typ == NDN_TLV_FinalBlockId) {
                     if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
+                        printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                         goto Bail;
                     }
                     if (typ == NDN_TLV_NameComponent) {
                         // TODO: again, includedNonNeg not yet implemented
                         pkt->val.final_block_id = ccnl_ndntlv_nonNegInt(cp + 1, i - 1);
                         if (pkt->val.final_block_id < 0) { // TODO: Is this check ok?
+                            printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_nonNegInt failed\n");
                             goto Bail;
                         }
                     }
@@ -268,7 +276,7 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
             break;
         case NDN_TLV_Frag_BeginEndFields:
             pkt->val.seqno = ccnl_ndntlv_nonNegInt(*data, len);
-            DEBUGMSG(TRACE, "  frag: %04llux\n", (unsigned long long)pkt->val.seqno);
+            printf("  frag: %04llux\n", (unsigned long long)pkt->val.seqno);
             if (pkt->val.seqno & 0x4000) {
                 pkt->flags |= CCNL_PKT_FRAG_BEGIN;
             }
@@ -281,6 +289,7 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
         case NDN_TLV_SignatureInfo:
             while (len2 > 0) {
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
+                    printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                     goto Bail;
                 }
                 if (typ == NDN_TLV_SignatureType && i == 1 &&
@@ -299,6 +308,25 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
             }
             break;
 #endif
+
+#ifdef CACHING_ABC
+        case NDN_TLV_Centrality:
+            while (len2 > 0) {
+                if (ccnl_ndntlv_dehead(&cp, &len2, (int*) &typ, &i)) {
+                    goto Bail;
+                }
+                if (typ == NDN_TLV_CentralitySrc) {
+                    pkt->s.ndntlv.src = ccnl_ndntlv_nonNegInt(cp, i);
+                }
+                if (typ == NDN_TLV_CentralityVal) {
+                    pkt->s.ndntlv.centrality = ccnl_ndntlv_nonNegInt(cp, i);
+                }
+                cp += i;
+                len2 -= i;
+            }
+            break;
+#endif //CACHING_ABC
+
         default:
             break;
         }
@@ -307,12 +335,14 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
         oldpos = *data - start;
     }
     if (*datalen > 0) {
+        printf("ccnl_ndntlv_bytes2pkt: datalen > 0\n");
         goto Bail;
     }
 
     pkt->pfx = prefix;
     pkt->buf = ccnl_buf_new(start, *data - start);
     if (!pkt->buf) {
+        printf("ccnl_ndntlv_bytes2pkt: ccnl_buf_new failed\n");
         goto Bail;
     }
     // carefully rebase ptrs to new buf because of 64bit pointers:
@@ -330,7 +360,9 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
 
     return pkt;
 Bail:
-    ccnl_pkt_free(pkt);
+    if (pkt) {
+        ccnl_pkt_free(pkt);
+    }
     return NULL;
 }
 
@@ -510,6 +542,10 @@ ccnl_ndntlv_prependName(struct ccnl_prefix_s *name,
     }
 
     for (cnt = name->compcnt; cnt > 0; cnt--) {
+        if (!name || !name->comp) {
+            printf("ccnl_ndntlv_prependName failed: name or name->comp is NULL\n");
+            return -1;
+        }
         if (ccnl_ndntlv_prependBlob(NDN_TLV_NameComponent, name->comp[cnt-1],
                                     name->complen[cnt-1], offset, buf) < 0) {
             return -1;
@@ -563,6 +599,19 @@ ccnl_ndntlv_prependInterest(struct ccnl_prefix_s *name, int scope, struct ccnl_n
             return -1;
         }
     }
+
+#ifdef CACHING_ABC
+    int cc_offset = *offset;
+    if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_CentralitySrc, opts->src,
+                offset, buf) < 0)
+        return -1;
+    if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_CentralityVal,
+                opts->centrality, offset, buf) < 0)
+        return -1;
+    if (ccnl_ndntlv_prependTL(NDN_TLV_Centrality, cc_offset - *offset,
+                offset, buf) < 0)
+        return -1;
+#endif //CACHING_ABC
 
     if (ccnl_ndntlv_prependName(name, offset, buf)) {
         return -1;
@@ -655,6 +704,16 @@ ccnl_ndntlv_prependContent(struct ccnl_prefix_s *name,
                               offset, buf) < 0) {
         return -1;
     }
+
+#ifdef CACHING_ABC
+    int cc_offset = *offset;
+    if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_CentralityVal,
+                opts->centrality, offset, buf) < 0)
+        return -1;
+    if (ccnl_ndntlv_prependTL(NDN_TLV_Centrality, cc_offset - *offset,
+                offset, buf) < 0)
+        return -1;
+#endif //CACHING_ABC
 
     // mandatory
     if (ccnl_ndntlv_prependName(name, offset, buf)) {

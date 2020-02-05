@@ -43,8 +43,9 @@
 #include <ccnl-pkt-switch.h>
 #endif
 
-//#include "ccnl-logging.h"
+#include "ccn-lite-riot.h"
 
+//#include "ccnl-logging.h"
 
 #ifdef NEEDS_PREFIX_MATCHING
 struct ccnl_prefix_s* ccnl_prefix_dup(struct ccnl_prefix_s *prefix);
@@ -65,12 +66,12 @@ ccnl_fwd_handleContent(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         char *from_as_str = ccnl_addr2ascii(&(from->peer));
 
         if (from_as_str) {
-             DEBUGMSG_CFWD(INFO, "  incoming data=<%s>%s from=%s\n",
+             printf("  incoming data=<%s>%s from=%s\n",
                 ccnl_prefix_to_str((*pkt)->pfx,s,CCNL_MAX_PREFIX_SIZE), ccnl_suite2str((*pkt)->suite),
                   from_as_str ? from_as_str : "");
         }
     } else {
-        DEBUGMSG_CFWD(INFO, "  incoming data=<%s>%s from=%s\n",
+        printf("  incoming data=<%s>%s from=%s\n",
             ccnl_prefix_to_str((*pkt)->pfx,s,CCNL_MAX_PREFIX_SIZE), ccnl_suite2str((*pkt)->suite), "");
 
     }
@@ -92,7 +93,7 @@ ccnl_fwd_handleContent(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     // CONFORM: Step 1:
     for (c = relay->contents; c; c = c->next) {
         if (ccnl_prefix_cmp(c->pkt->pfx, NULL, (*pkt)->pfx, CMP_EXACT) == 0) {
-            DEBUGMSG_CFWD(TRACE, "  content is duplicate, ignoring\n");
+            printf("  content is duplicate, ignoring\n");
             return 0; // content is dup, do nothing
         }
     }
@@ -102,20 +103,25 @@ ccnl_fwd_handleContent(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         return 0;
     }
 
+    printf("RCV_DAT %s %lu %s\n",
+            ccnl_prefix_to_str(c->pkt->pfx, s, CCNL_MAX_PREFIX_SIZE),
+            xtimer_now_usec(),
+            c->pkt->content);
+
     if (!ccnl_content_serve_pending(relay, c)) { // unsolicited content
         // CONFORM: "A node MUST NOT forward unsolicited data [...]"
-        DEBUGMSG_CFWD(DEBUG, "  removed because no matching interest\n");
+        printf("  removed because no matching interest\n");
         ccnl_content_free(c);
         return 0;
     }
 
-    if (relay->max_cache_entries != 0) { // it's set to -1 or a limit
-        DEBUGMSG_CFWD(DEBUG, "  adding content to cache\n");
+    if (relay->max_cache_entries != 0 && cache_strategy_cache(relay, c)) { // it's set to -1 or a limit
+        printf("  adding content to cache\n");
         ccnl_content_add2cache(relay, c);
         int contlen = (int) (c->pkt->contlen > INT_MAX ? INT_MAX : c->pkt->contlen);
-        DEBUGMSG_CFWD(INFO, "data after creating packet %.*s\n", contlen, c->pkt->content);
+        printf("data after creating packet %.*s\n", contlen, c->pkt->content);
     } else {
-        DEBUGMSG_CFWD(DEBUG, "  content not added to cache\n");
+        printf("  content not added to cache\n");
         ccnl_content_free(c);
     }
 
@@ -201,7 +207,7 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
              ccnl_suite2str((*pkt)->suite), nonce,
              from_as_str ? from_as_str : "");
 #else
-        DEBUGMSG_CFWD(INFO, "  incoming interest=<%s>%s nonce=%d from=%s\n",
+        printf("  incoming interest=<%s>%s nonce=%d from=%s\n",
             ccnl_prefix_to_str((*pkt)->pfx,s,CCNL_MAX_PREFIX_SIZE),
             ccnl_suite2str((*pkt)->suite), nonce,
             from_as_str ? from_as_str : "");
@@ -214,7 +220,7 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     #ifndef CCNL_LINUXKERNEL
         DEBUGMSG_CFWD(DEBUG, "  dropped because of duplicate nonce %"PRIi32"\n", nonce);
     #else
-        DEBUGMSG_CFWD(DEBUG, "  dropped because of duplicate nonce %d\n", nonce);
+        printf("  dropped because of duplicate nonce %d\n", nonce);
     #endif
         return 0;
     }
@@ -225,7 +231,7 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 #if defined(USE_SUITE_CCNB) && defined(USE_MGMT)
     if ((*pkt)->suite == CCNL_SUITE_CCNB && (*pkt)->pfx->compcnt == 4 &&
                                   !memcmp((*pkt)->pfx->comp[0], "ccnx", 4)) {
-        DEBUGMSG_CFWD(INFO, "  found a mgmt message\n");
+        printf("  found a mgmt message\n");
         ccnl_mgmt(relay, (*pkt)->buf, (*pkt)->pfx, from); // use return value? // TODO uncomment
         return 0;
     }
@@ -234,7 +240,7 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 #ifdef USE_SUITE_NDNTLV
     if ((*pkt)->suite == CCNL_SUITE_NDNTLV && (*pkt)->pfx->compcnt == 4 &&
         !memcmp((*pkt)->pfx->comp[0], "ccnx", 4)) {
-        DEBUGMSG_CFWD(INFO, "  found a mgmt message\n");
+        printf("  found a mgmt message\n");
 #ifdef USE_MGMT
         ccnl_mgmt(relay, (*pkt)->buf, (*pkt)->pfx, from); // use return value?
 #endif
@@ -243,7 +249,7 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 #endif
 
             // Step 1: search in content store
-    DEBUGMSG_CFWD(DEBUG, "  searching in CS\n");
+    printf("  searching in CS\n");
 
     for (c = relay->contents; c; c = c->next) {
         if (c->pkt->pfx->suite != (*pkt)->pfx->suite)
@@ -251,10 +257,18 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         if (cMatch(*pkt, c))
             continue;
 
-        DEBUGMSG_CFWD(DEBUG, "  found matching content %p\n", (void *) c);
+        printf("  found matching content %p\n", (void *) c);
 
         if (from) {
             if (from->ifndx >= 0) {
+
+#ifdef CACHING_ABC
+                c->pkt->s.ndntlv.centrality = (*pkt)->s.ndntlv.centrality;
+                if (ccnl_content_reserialise(c)) {
+                    printf("ccnl-fwd: reserialise failed!\n");
+                }
+#endif //CACHING_ABC
+
                 ccnl_send_pkt(relay, from, c->pkt);
             } else {
 #ifdef CCNL_APP_RX 
@@ -278,17 +292,32 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         return -1;
     if (!i) {
         i = ccnl_interest_new(relay, from, pkt);
+    }
 
-        DEBUGMSG_CFWD(DEBUG,
+    if (i) { // store the I request, for the incoming face (Step 3)
+        printf(
                       "  created new interest entry %p (prefix=%s)\n",
                       (void *) i, ccnl_prefix_to_str(i->pkt->pfx,s,CCNL_MAX_PACKET_SIZE));
-    }
-    if (i) { // store the I request, for the incoming face (Step 3)
-        DEBUGMSG_CFWD(DEBUG, "  appending interest entry %p\n", (void *) i);
+        printf("  appending interest entry %p\n", (void *) i);
+
         ccnl_interest_append_pending(i, from);
         if(propagate) {
+
+#ifdef CACHING_ABC
+            printf("[BETW] Forwarding Interest.");
+            printf("\tmy betw: %d, target betw: %d\n",
+                    my_betw, i->pkt->s.ndntlv.centrality);
+
+            if (my_betw > i->pkt->s.ndntlv.centrality) {
+                i->pkt->s.ndntlv.centrality = my_betw;
+                printf("[BETW] Set target betw to %d\n", i->pkt->s.ndntlv.centrality);
+            }
+#endif //CACHING_ABC
+
             ccnl_interest_propagate(relay, i);
         }
+    } else {
+        return -1;
     }
     return 0;
 }

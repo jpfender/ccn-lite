@@ -311,7 +311,7 @@ ccnl_URItoPrefix(char* uri, int suite, uint32_t *chunknum)
     size_t complens[CCNL_MAX_NAME_COMP], len, tlen;
     uint32_t cnt, i;
 
-    DEBUGMSG_CUTL(TRACE, "ccnl_URItoPrefix(suite=%s, uri=%s)\n",
+    printf("ccnl_URItoPrefix(suite=%s, uri=%s)\n",
              ccnl_suite2str(suite), uri);
 
     if (strlen(uri)) {
@@ -543,6 +543,11 @@ ccnl_prefix_to_str_detailed(struct ccnl_prefix_s *pr, int ccntlv_skip, int escap
         skip = 4;
     }
 #endif
+
+    if (!pr) {
+        printf("ccnl-prefix: ccnl_prefix_to_str_detailed: prefix is NULL\n");
+        return NULL;
+    }
 
     for (i = 0; i < (size_t) pr->compcnt; i++) {
         result = snprintf(buf + len, buflen - len, "/");

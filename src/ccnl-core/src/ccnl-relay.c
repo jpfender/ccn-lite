@@ -33,7 +33,9 @@
 #include "ccn-lite-riot.h"
 #endif
 
-
+#ifdef CACHING_ABC
+#include "ccnl-pkt-builder.h"
+#endif //CACHING_ABC
 
 struct ccnl_face_s*
 ccnl_get_face_or_create(struct ccnl_relay_s *ccnl, int ifndx,
@@ -388,6 +390,65 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     }
     DEBUGMSG_CORE(DEBUG, "ccnl_interest_propagate\n");
 
+#ifdef ABC_CACHING
+    // reserialize packet
+    struct ccnl_prefix_s *prefix = i->pkt->pfx;
+    ccnl_interest_opts_u int_opts;
+    int nonce = 0;
+
+    if (i->pkt != NULL && i->pkt->s.ndntlv.nonce != NULL) {
+        if (i->pkt->s.ndntlv.nonce->datalen == 4) {
+            memcpy(&nonce, i->pkt->s.ndntlv.nonce->data, 4);
+        }
+    }
+
+    int_opts.ndntlv.nonce = nonce;
+    int_opts.ndntlv.mustbefresh = false;
+    int_opts.ndntlv.interestlifetime = i->pkt->s.ndntlv.interestlifetime;
+    int_opts.ndntlv.centrality = i->pkt->s.ndntlv.centrality;
+
+    int len = 0;
+    int buf_len = 100;
+
+    unsigned char *buf = (unsigned char*) ccnl_calloc(1, buf_len);
+
+    if (!buf) {
+        return;
+    }
+
+    struct ccnl_face_s *to = i->pkt->to;
+
+    ccnl_mkInterest(prefix, &int_opts, buf, &len, &buf_len);
+
+    if (!buf) {
+        return;
+    }
+
+    buf += buf_len;
+
+    unsigned char *start = buf;
+    unsigned char *data = buf;
+
+    int typ;
+    int int_len;
+
+    if (ccnl_ndntlv_dehead(&data, &len, (int*) &typ, &int_len) || (int) int_len > len) {
+        return;
+    }
+
+    if (i->pkt) {
+        ccnl_pkt_free(i->pkt);
+    }
+
+    i->pkt = ccnl_ndntlv_bytes2pkt(NDN_TLV_Interest, start, &data, &len);
+
+    if (!(i->pkt)) {
+        return;
+    }
+
+    i->pkt->to = to;
+#endif //ABC_CACHING
+
     // CONFORM: "A node MUST implement some strategy rule, even if it is only to
     // transmit an Interest Message on all listed dest faces in sequence."
     // CCNL strategy: we forward on all FWD entries with a prefix match
@@ -546,13 +607,23 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
     char s[CCNL_MAX_PREFIX_SIZE];
     (void) s;
 
-    DEBUGMSG_CORE(DEBUG, "ccnl_content_add2cache (%d/%d) --> %p = %s [%d]\n",
-                  ccnl->contentcnt, ccnl->max_cache_entries,
-                  (void*)c, ccnl_prefix_to_str(c->pkt->pfx,s,CCNL_MAX_PREFIX_SIZE), (c->pkt->pfx->chunknum)? (signed) *(c->pkt->pfx->chunknum) : -1);
+    if (!c || !c->pkt || !c->pkt->pfx) {
+        printf("ccnl_content_add2cache: Couldn't add content to cache;\n");
+        printf("\tcontent or packet or prefix are NULL\n");
+        return NULL;
+    }
+
+    ccnl_prefix_to_str(c->pkt->pfx,s,CCNL_MAX_PREFIX_SIZE);
+
+    if (*s) {
+        printf("ccnl_content_add2cache (%d/%d) --> %p = %s [%d]\n",
+                    ccnl->contentcnt, ccnl->max_cache_entries,
+                    (void*)c, s, (c->pkt->pfx->chunknum)? (signed) *(c->pkt->pfx->chunknum) : -1);
+    }
 
     for (cit = ccnl->contents; cit; cit = cit->next) {
         if (ccnl_prefix_cmp(c->pkt->pfx, NULL, cit->pkt->pfx, CMP_EXACT) == 0) {
-            DEBUGMSG_CORE(DEBUG, "--- Already in cache ---\n");
+            printf("--- Already in cache ---\n");
             return NULL;
         }
     }
@@ -570,7 +641,7 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
              }
          }
          if (oldest) {
-             DEBUGMSG_CORE(DEBUG, " remove old entry from cache\n");
+             printf(" remove old entry from cache\n");
              ccnl_content_remove(ccnl, oldest);
          }
     }
@@ -588,6 +659,41 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 
     return c;
 }
+
+#ifdef CACHING_ABC
+int
+ccnl_content_reserialise(struct ccnl_content_s *c)
+{
+    ccnl_data_opts_u opts;
+    opts.ndntlv.freshnessperiod = c->pkt->s.ndntlv.freshnessperiod;
+    opts.ndntlv.centrality = c->pkt->s.ndntlv.centrality;
+    int len = c->pkt->contlen;
+    int offs = CCNL_MAX_PACKET_SIZE;
+    unsigned char _out[CCNL_MAX_PACKET_SIZE];
+
+    int arg_len = ccnl_ndntlv_prependContent(c->pkt->pfx,
+            c->pkt->content, len, NULL, &(opts.ndntlv),
+            &offs, _out);
+
+    unsigned char *olddata;
+    unsigned char *data = olddata = _out + offs;
+
+    unsigned typ;
+
+    if (ccnl_ndntlv_dehead(&data, &arg_len, (int*) &typ,
+                &len) || typ != NDN_TLV_Data) {
+        return -1;
+    }
+
+    if (c->pkt) {
+        ccnl_pkt_free(c->pkt);
+    }
+
+    c->pkt = ccnl_ndntlv_bytes2pkt(typ, olddata, &data, &arg_len);
+
+    return 0;
+}
+#endif
 
 int
 ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
@@ -683,6 +789,12 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 #endif
                 DEBUGMSG_CORE(VERBOSE, "    Serve to face: %d (pkt=%p)\n",
                          pi->face->faceid, (void*) c->pkt);
+
+#ifdef ABC_CACHING
+                if (ccnl_content_reserialise(c)) {
+                    /*printf("ccnl-relay: reserialise failed!\n");*/
+                }
+#endif //ABC_CACHING
 
                 ccnl_send_pkt(ccnl, pi->face, c->pkt);
 

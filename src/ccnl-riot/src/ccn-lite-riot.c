@@ -45,6 +45,8 @@
 #include "ccnl-producer.h"
 #include "ccnl-pkt-builder.h"
 
+int my_betw = 0;
+
 /**
  * @brief May be defined for a particular caching strategy
  */
@@ -69,6 +71,11 @@ static char _ccnl_stack[CCNL_STACK_SIZE];
  * caching strategy removal function
  */
 static ccnl_cache_strategy_func _cs_remove_func = NULL;
+
+/**
+ * caching strategy decision function
+ */
+static ccnl_cache_strategy_func _cs_decision_func = NULL;
 
 /**
  * currently configured suite
@@ -338,6 +345,13 @@ _receive(struct ccnl_relay_s *ccnl, msg_t *m)
     su.linklayer.sll_halen = nethdr->src_l2addr_len;
     memcpy(su.linklayer.sll_addr, gnrc_netif_hdr_get_src_addr(nethdr), nethdr->src_l2addr_len);
 
+    if ((((uint8_t *)ccn_pkt->data)[0] == 0x80) && (((uint8_t *)ccn_pkt->data)[1] == 0x08)) {
+        printf("DISPATCH_RECEIVE SHOULD HAPPEN HERE (0x80, 0x08)\n");
+    }
+    else if ((((uint8_t *)ccn_pkt->data)[0] == 0x81) && (((uint8_t *)ccn_pkt->data)[1] == 0x09)) {
+        printf("DISPATCH_RECEIVE SHOULD HAPPEN HERE (0x81, 0x09)\n");
+    }
+
     /* call CCN-lite callback and free memory in packet buffer */
     ccnl_core_RX(ccnl, i, ccn_pkt->data, ccn_pkt->size, &su.sa, sizeof(su.sa));
     gnrc_pktbuf_release(pkt);
@@ -539,16 +553,19 @@ ccnl_send_interest(struct ccnl_prefix_s *prefix, unsigned char *buf, int buf_len
     default_opts.ndntlv.nonce = 0;
     default_opts.ndntlv.mustbefresh = false;
     default_opts.ndntlv.interestlifetime = CCNL_INTEREST_TIMEOUT * 1000; // ms
+#ifdef CACHING_ABC
+    default_opts.ndntlv.centrality = 0;
+#endif //CACHING_ABC
 
     if (_ccnl_suite != CCNL_SUITE_NDNTLV) {
-        DEBUGMSG(WARNING, "Suite not supported by RIOT!\n");
+        printf("Suite not supported by RIOT!\n");
         return -1;
     }
 
-    DEBUGMSG(INFO, "interest for chunk number: %lu\n", (prefix->chunknum == NULL) ? (unsigned long) 0 : (unsigned long) *prefix->chunknum);
+    printf("interest for chunk number: %lu\n", (prefix->chunknum == NULL) ? (unsigned long) 0 : (unsigned long) *prefix->chunknum);
 
     if (!prefix) {
-        DEBUGMSG(ERROR, "prefix could not be created!\n");
+        printf("prefix could not be created!\n");
         return -2;
     }
 
@@ -560,7 +577,7 @@ ccnl_send_interest(struct ccnl_prefix_s *prefix, unsigned char *buf, int buf_len
         int_opts->ndntlv.nonce = random_uint32();
     }
 
-    DEBUGMSG(DEBUG, "nonce: %" PRIi32 "\n", int_opts->ndntlv.nonce);
+    printf("nonce: %" PRIi32 "\n", int_opts->ndntlv.nonce);
 
     ccnl_mkInterest(prefix, int_opts, buf, (buf + buf_len), &len, (size_t *)&buf_len);
 
@@ -576,21 +593,21 @@ ccnl_send_interest(struct ccnl_prefix_s *prefix, unsigned char *buf, int buf_len
 
     /* TODO: support other suites */
     if (ccnl_ndntlv_dehead(&data, &len, &typ, &int_len) || (int_len > len)) {
-        DEBUGMSG(WARNING, "  invalid packet format\n");
+        printf("  invalid packet format\n");
         return -3;
     }
 
     pkt = ccnl_ndntlv_bytes2pkt(NDN_TLV_Interest, start, &data, &len);
 
     if (!pkt) {
-        DEBUGMSG(WARNING, "could not create Interest pkt\n");
+        printf("could not create Interest pkt\n");
         return -4;
     }
 
     msg_t m = { .type = GNRC_NETAPI_MSG_TYPE_SND, .content.ptr = pkt };
     ret = msg_send(&m, ccnl_event_loop_pid);
     if(ret < 1){
-        DEBUGMSG(WARNING, "could not send Interest: %i\n", ret);
+        printf("could not send Interest: %i\n", ret);
     }
 
     return ret;
@@ -602,6 +619,12 @@ ccnl_set_cache_strategy_remove(ccnl_cache_strategy_func func)
     _cs_remove_func = func;
 }
 
+void
+ccnl_set_cache_strategy_cache(ccnl_cache_strategy_func func)
+{
+    _cs_decision_func = func;
+}
+
 int
 cache_strategy_remove(struct ccnl_relay_s *relay, struct ccnl_content_s *c)
 {
@@ -609,4 +632,14 @@ cache_strategy_remove(struct ccnl_relay_s *relay, struct ccnl_content_s *c)
         return _cs_remove_func(relay, c);
     }
     return 0;
+}
+
+int
+cache_strategy_cache(struct ccnl_relay_s *relay, struct ccnl_content_s *c)
+{
+    if (_cs_decision_func) {
+        return _cs_decision_func(relay, c);
+    }
+    /* If no caching decision strategy is defined, cache everything */
+    return 1;
 }
