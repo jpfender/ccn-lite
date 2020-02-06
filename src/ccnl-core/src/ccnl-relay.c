@@ -823,8 +823,8 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 }
 
 #define DEBUGMSG_AGEING(trace, debug, buf, buf_len)    \
-DEBUGMSG_CORE(TRACE, "%s %p\n", (trace), (void*) i);   \
-DEBUGMSG_CORE(DEBUG, " %s 0x%p <%s>\n", (debug),       \
+printf("%s %p\n", (trace), (void*) i);   \
+printf(" %s 0x%p <%s>\n", (debug),       \
     (void*)i,                                          \
     ccnl_prefix_to_str(i->pkt->pfx,buf,buf_len));
 
@@ -837,7 +837,7 @@ ccnl_do_ageing(void *ptr, void *dummy)
     struct ccnl_interest_s *i = relay->pit;
     struct ccnl_face_s *f = relay->faces;
     time_t t = CCNL_NOW();
-    DEBUGMSG_CORE(VERBOSE, "ageing t=%d\n", (int)t);
+    printf("aging t=%d\n", (int)t);
     (void) dummy;
     char s[CCNL_MAX_PREFIX_SIZE];
     (void) s;
@@ -845,7 +845,7 @@ ccnl_do_ageing(void *ptr, void *dummy)
     while (c) {
         if ((c->last_used + CCNL_CONTENT_TIMEOUT) <= (uint32_t) t &&
                                 !(c->flags & CCNL_CONTENT_FLAGS_STATIC)){
-            DEBUGMSG_CORE(TRACE, "AGING: CONTENT REMOVE %p\n", (void*) c);
+            printf("AGING: CONTENT REMOVE %p\n", (void*) c);
             c = ccnl_content_remove(relay, c);
         }
         else {
@@ -870,9 +870,9 @@ ccnl_do_ageing(void *ptr, void *dummy)
         } else {
             // CONFORM: "A node MUST retransmit Interest Messages
             // periodically for pending PIT entries."
-            DEBUGMSG_CORE(DEBUG, " retransmit %d <%s>\n", i->retries,
+            printf(" retransmit %d <%s>\n", i->retries,
                      ccnl_prefix_to_str(i->pkt->pfx,s,CCNL_MAX_PREFIX_SIZE));
-                DEBUGMSG_CORE(TRACE, "AGING: PROPAGATING INTEREST %p\n", (void*) i);
+                printf("AGING: PROPAGATING INTEREST %p\n", (void*) i);
                 ccnl_interest_propagate(relay, i);
 
             i->retries++;
@@ -882,7 +882,7 @@ ccnl_do_ageing(void *ptr, void *dummy)
     while (f) {
         if (!(f->flags & CCNL_FACE_FLAGS_STATIC) &&
                 (f->last_used + CCNL_FACE_TIMEOUT) <= (uint32_t) t){
-            DEBUGMSG_CORE(TRACE, "AGING: FACE REMOVE %p\n", (void*) f);
+            printf("AGING: FACE REMOVE %p\n", (void*) f);
             f = ccnl_face_remove(relay, f);
         } else {
             f = f->next;
