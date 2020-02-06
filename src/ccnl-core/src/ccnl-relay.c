@@ -667,20 +667,21 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
     ccnl_data_opts_u opts;
     opts.ndntlv.freshnessperiod = c->pkt->s.ndntlv.freshnessperiod;
     opts.ndntlv.centrality = c->pkt->s.ndntlv.centrality;
-    int len = c->pkt->contlen;
-    int offs = CCNL_MAX_PACKET_SIZE;
+    size_t len = c->pkt->contlen;
+    size_t offs = CCNL_MAX_PACKET_SIZE;
     unsigned char _out[CCNL_MAX_PACKET_SIZE];
+    size_t reslen;
 
-    int arg_len = ccnl_ndntlv_prependContent(c->pkt->pfx,
+    size_t arg_len = ccnl_ndntlv_prependContent(c->pkt->pfx,
             c->pkt->content, len, NULL, &(opts.ndntlv),
-            &offs, _out);
+            &offs, _out, &reslen);
 
     unsigned char *olddata;
     unsigned char *data = olddata = _out + offs;
 
     unsigned typ;
 
-    if (ccnl_ndntlv_dehead(&data, &arg_len, (int*) &typ,
+    if (ccnl_ndntlv_dehead(&data, &arg_len, (uint64_t*) &typ,
                 &len) || typ != NDN_TLV_Data) {
         return -1;
     }
