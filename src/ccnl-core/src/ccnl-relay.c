@@ -391,7 +391,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     DEBUGMSG_CORE(DEBUG, "ccnl_interest_propagate\n");
 
 #ifdef ABC_CACHING
-    // reserialize packet
+    // reserialise packet
     struct ccnl_prefix_s *prefix = i->pkt->pfx;
     ccnl_interest_opts_u int_opts;
     int nonce = 0;
@@ -413,6 +413,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     unsigned char *buf = (unsigned char*) ccnl_calloc(1, buf_len);
 
     if (!buf) {
+        printf("interest_propagate: buf calloc failed\n");
         return;
     }
 
@@ -421,6 +422,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     ccnl_mkInterest(prefix, &int_opts, buf, &len, &buf_len);
 
     if (!buf) {
+        printf("interest_propagate: mkInterest failed\n");
         return;
     }
 
@@ -433,6 +435,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     int int_len;
 
     if (ccnl_ndntlv_dehead(&data, &len, (int*) &typ, &int_len) || (int) int_len > len) {
+        printf("interest_propagate: dehead failed\n");
         return;
     }
 
@@ -443,6 +446,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     i->pkt = ccnl_ndntlv_bytes2pkt(NDN_TLV_Interest, start, &data, &len);
 
     if (!(i->pkt)) {
+        printf("interest_propagate: bytes2pkt failed\n");
         return;
     }
 
@@ -664,6 +668,7 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 int
 ccnl_content_reserialise(struct ccnl_content_s *c)
 {
+    printf("ccnl_content_reserialise()\n");
     ccnl_data_opts_u opts;
     opts.ndntlv.freshnessperiod = c->pkt->s.ndntlv.freshnessperiod;
     opts.ndntlv.centrality = c->pkt->s.ndntlv.centrality;
@@ -683,6 +688,7 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
 
     if (ccnl_ndntlv_dehead(&data, &arg_len, (uint64_t*) &typ,
                 &len) || typ != NDN_TLV_Data) {
+        printf("reserialise: dehead failed\n");
         return -1;
     }
 
@@ -793,7 +799,7 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 
 #ifdef ABC_CACHING
                 if (ccnl_content_reserialise(c)) {
-                    /*printf("ccnl-relay: reserialise failed!\n");*/
+                    printf("ccnl-relay: reserialise failed!\n");
                 }
 #endif //ABC_CACHING
 
