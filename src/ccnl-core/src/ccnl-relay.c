@@ -800,6 +800,8 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 #ifdef ABC_CACHING
                 if (ccnl_content_reserialise(c)) {
                     printf("ccnl-relay: reserialise failed!\n");
+                } else {
+                    printf("ccnl-relay: reserialise successful!\n");
                 }
 #endif //ABC_CACHING
 

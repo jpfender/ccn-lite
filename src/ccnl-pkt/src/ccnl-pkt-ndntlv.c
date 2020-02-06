@@ -86,16 +86,20 @@ ccnl_ndntlv_dehead(uint8_t **buf, size_t *len,
     size_t maxlen = *len;
     uint64_t vallen_int = 0;
     if (ccnl_ndntlv_varlenint(buf, len, typ)) {
+        printf("dehead: varlenint(typ) != 0\n");
         return -1;
     }
     if (ccnl_ndntlv_varlenint(buf, len, &vallen_int)) {
+        printf("dehead: varlenint(vallen_int) != 0\n");
         return -1;
     }
     if (vallen_int > SIZE_MAX) {
+        printf("dehead: vallen_int > SIZE_MAX\n");
         return -1; // Return failure (-1) if length value in the tlv exceeds size_t bounds
     }
     *vallen = (size_t) vallen_int;
     if (*vallen > maxlen) {
+        printf("dehead: vallen > maxlen\n");
         return -1; // Return failure (-1) if length value in the tlv is longer than the buffer
     }
     return 0;
