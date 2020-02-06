@@ -136,7 +136,7 @@ struct ccnl_ndntlv_interest_opts_s {
     /* Guiders */
     uint32_t interestlifetime;  /**< Interest Lifetime Guider */
 #ifdef CACHING_ABC
-    uint8_t centrality;
+    uint16_t centrality;
 #endif //CACHING_ABC
 };
 
@@ -150,7 +150,7 @@ struct ccnl_ndntlv_data_opts_s {
      * Use integer for simplicity for now */
     uint32_t finalblockid;          /**< final block ID */
 #ifdef CACHING_ABC
-    uint8_t centrality;
+    uint16_t centrality;
 #endif //CACHING_ABC
 };
 
