@@ -153,6 +153,9 @@ ccnl_content_remove(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c);
 struct ccnl_content_s*
 ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c);
 
+int
+ccnl_content_reserialise(struct ccnl_content_s *c);
+
 /**
  * @brief deliver new content @p c to all clients with (loosely) matching interest 
  *
