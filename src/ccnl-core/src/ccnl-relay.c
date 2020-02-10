@@ -417,7 +417,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
         return;
     }
 
-    struct ccnl_face_s *to = i->pkt->to;
+    /*struct ccnl_face_s *to = i->pkt->to;*/
 
     ccnl_mkInterest(prefix, &int_opts, buf, buf+buf_len, &len, &buf_len);
 
@@ -450,8 +450,8 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
         return;
     }
 
-    i->pkt->to = to;
-#endif //ABC_CACHING
+    /*i->pkt->to = to;*/
+#endif //CACHING_ABC
 
     // CONFORM: "A node MUST implement some strategy rule, even if it is only to
     // transmit an Interest Message on all listed dest faces in sequence."
