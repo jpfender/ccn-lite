@@ -50,13 +50,18 @@ ccnl_content_new(struct ccnl_pkt_s **pkt)
     char s[CCNL_MAX_PREFIX_SIZE];
     (void) s;
 
-    DEBUGMSG_CORE(TRACE, "ccnl_content_new %p <%s [%lu]>\n",
+    printf("ccnl_content_new %p <%s [%lu]>\n",
              (void*) *pkt, ccnl_prefix_to_str((*pkt)->pfx, s, CCNL_MAX_PREFIX_SIZE),
              ((*pkt)->pfx->chunknum) ? (long unsigned) *((*pkt)->pfx->chunknum) : (long unsigned) 0);
 
     c = (struct ccnl_content_s *) ccnl_calloc(1, sizeof(struct ccnl_content_s));
-    if (!c)
+    if (!c) {
+        printf("ccnl_content_new: calloc failed\n");
+        /*if (*pkt) {*/
+            /*ccnl_pkt_free(*pkt);*/
+        /*}*/
         return NULL;
+    }
     c->pkt = *pkt;
     *pkt = NULL;
     c->last_used = CCNL_NOW();

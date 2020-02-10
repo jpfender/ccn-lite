@@ -59,7 +59,7 @@ ccnl_interest_new(struct ccnl_relay_s *ccnl, struct ccnl_face_s *from,
                   ccnl_suite2str((*pkt)->pfx->suite));
 
     if (!i) {
-        printf("ccnl-interest: ccnl_interest_new calloc failed");
+        printf("ccnl-interest: ccnl_interest_new calloc failed\n");
         return NULL;
     }
     i->pkt = *pkt;

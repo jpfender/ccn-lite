@@ -388,7 +388,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     if (!i) {
         return;
     }
-    DEBUGMSG_CORE(DEBUG, "ccnl_interest_propagate\n");
+    printf("ccnl_interest_propagate\n");
 
 #ifdef ABC_CACHING
     // reserialise packet
@@ -686,7 +686,11 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
 
     unsigned typ;
 
-    if (ccnl_ndntlv_dehead(&data, &arg_len, (uint64_t*) &typ,
+    printf("reserialise: before dehead:\n");
+    /*printf("\tdata: %s\n", data);*/
+    printf("\treslen: %lu\n", (unsigned long)reslen);
+    printf("\tlen: %lu\n", (unsigned long)len);
+    if (ccnl_ndntlv_dehead(&data, &reslen, (uint64_t*) &typ,
                 &len) || typ != NDN_TLV_Data) {
         printf("reserialise: dehead failed\n");
         return -1;

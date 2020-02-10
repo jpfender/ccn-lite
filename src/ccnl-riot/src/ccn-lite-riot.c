@@ -421,11 +421,11 @@ void
                 prefix = (struct ccnl_prefix_s *)m.content.ptr;
                 spref = ccnl_prefix_to_path(prefix);
                 if (!spref) {
-                    DEBUGMSG(WARNING, "ccn-lite: CS remove failed, because of no memory available\n");
+                    printf("ccn-lite: CS remove failed, because of no memory available\n");
                     break;
                 }
                 if (ccnl_cs_remove(ccnl, spref) < 0) {
-                    DEBUGMSG(WARNING, "removing CS entry failed\n");
+                    printf("removing CS entry failed\n");
                 }
                 ccnl_free(spref);
                 break;
@@ -439,7 +439,7 @@ void
                     ccnl_free(spref);
                 }
                 else {
-                    DEBUGMSG(WARNING, "ccn-lite: CS lookup failed, because of no memory available\n");
+                    printf("ccn-lite: CS lookup failed, because of no memory available\n");
                     content = NULL;
                 }
                 mr.content.ptr = content;
@@ -577,7 +577,7 @@ ccnl_send_interest(struct ccnl_prefix_s *prefix, unsigned char *buf, int buf_len
         int_opts->ndntlv.nonce = random_uint32();
     }
 
-    printf("nonce: %" PRIi32 "\n", int_opts->ndntlv.nonce);
+    printf("nonce: %" PRIu32 "\n", int_opts->ndntlv.nonce);
 
     ccnl_mkInterest(prefix, int_opts, buf, (buf + buf_len), &len, (size_t *)&buf_len);
 
@@ -592,6 +592,10 @@ ccnl_send_interest(struct ccnl_prefix_s *prefix, unsigned char *buf, int buf_len
     size_t int_len;
 
     /* TODO: support other suites */
+    printf("send_interest: before dehead:\n");
+    printf("\tdata: %s\n", data);
+    printf("\tlen: %lu\n", (unsigned long)len);
+    printf("\tint_len: %lu\n", (unsigned long)int_len);
     if (ccnl_ndntlv_dehead(&data, &len, &typ, &int_len) || (int_len > len)) {
         printf("  invalid packet format\n");
         return -3;

@@ -117,7 +117,12 @@ ccnl_fwd_handleContent(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 
     if (relay->max_cache_entries != 0 && cache_strategy_cache(relay, c)) { // it's set to -1 or a limit
         printf("  adding content to cache\n");
-        ccnl_content_add2cache(relay, c);
+        struct ccnl_content_s *res = 0;
+        res = ccnl_content_add2cache(relay, c);
+        if (!res) {
+            printf("ccnl-fwd: add2cache returned NULL\n");
+            ccnl_content_free(c);
+        }
         int contlen = (int) (c->pkt->contlen > INT_MAX ? INT_MAX : c->pkt->contlen);
         printf("data after creating packet %.*s\n", contlen, c->pkt->content);
     } else {
@@ -334,21 +339,23 @@ ccnl_ccnb_fwd(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     int8_t rc= -1;
     struct ccnl_pkt_s *pkt;
 
-    DEBUGMSG_CFWD(DEBUG, "ccnb fwd (%zu bytes left)\n", *datalen);
+    printf("ccnb fwd (%lu bytes left)\n", (unsigned long)*datalen);
 
     pkt = ccnl_ccnb_bytes2pkt(*data - 2, data, datalen);
     if (!pkt) {
-        DEBUGMSG_CFWD(WARNING, "  parsing error or no prefix\n");
+        printf("  parsing error or no prefix\n");
         goto Done;
     }
     pkt->type = typ;
     pkt->flags |= typ == CCN_DTAG_INTEREST ? CCNL_PKT_REQUEST : CCNL_PKT_REPLY;
 
     if (pkt->flags & CCNL_PKT_REQUEST) { // interest
+        printf("ccnb_fwd: calling handleInterest()\n");
         if (ccnl_fwd_handleInterest(relay, from, &pkt, ccnl_ccnb_cMatch)) {
             goto Done;
         }
     } else { // content
+        printf("ccnb_fwd: calling handleContent()\n");
         if (ccnl_fwd_handleContent(relay, from, &pkt)) {
             goto Done;
         }
@@ -574,25 +581,27 @@ ccnl_ndntlv_forwarder(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     unsigned char *start = *data;
     struct ccnl_pkt_s *pkt;
 
-    DEBUGMSG_CFWD(DEBUG, "ccnl_ndntlv_forwarder (%zu bytes left)\n", *datalen);
+    printf("ccnl_ndntlv_forwarder (%lu bytes left)\n", (unsigned long)*datalen);
 
     if (ccnl_ndntlv_dehead(data, datalen, &typ, &len) || len > *datalen) {
-        DEBUGMSG_CFWD(TRACE, "  invalid packet format\n");
+        printf("  invalid packet format\n");
         return -1;
     }
     pkt = ccnl_ndntlv_bytes2pkt(typ, start, data, datalen);
     if (!pkt) {
-        DEBUGMSG_CFWD(INFO, "  ndntlv packet coding problem\n");
+        printf("  ndntlv packet coding problem\n");
         goto Done;
     }
     pkt->type = typ;
     switch (typ) {
     case NDN_TLV_Interest:
+        printf("ndntlv_forwarder: calling handleInterest()\n");
         if (ccnl_fwd_handleInterest(relay, from, &pkt, ccnl_ndntlv_cMatch)) {
             goto Done;
         }
         break;
     case NDN_TLV_Data:
+        printf("ndntlv_forwarder: calling handleContent()\n");
         if (ccnl_fwd_handleContent(relay, from, &pkt)) {
             goto Done;
         }
@@ -605,7 +614,7 @@ ccnl_ndntlv_forwarder(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         break;
 #endif
     default:
-        DEBUGMSG_CFWD(INFO, "  unknown packet type %llu, dropped\n", (unsigned long long) typ);
+        printf("  unknown packet type %llu, dropped\n", (unsigned long long) typ);
         break;
     }
     rc = 0;
