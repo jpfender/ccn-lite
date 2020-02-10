@@ -407,8 +407,8 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     int_opts.ndntlv.interestlifetime = i->pkt->s.ndntlv.interestlifetime;
     int_opts.ndntlv.centrality = i->pkt->s.ndntlv.centrality;
 
-    int len = 0;
-    int buf_len = 100;
+    size_t len = 0;
+    size_t buf_len = CCNL_MAX_PACKET_SIZE;
 
     unsigned char *buf = (unsigned char*) ccnl_calloc(1, buf_len);
 
