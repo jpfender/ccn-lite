@@ -193,8 +193,8 @@ ccnl_interface_enqueue(void (tx_done)(void*, int, int), struct ccnl_face_s *f,
 {
     if (ifc) {
         struct ccnl_txrequest_s *r;
-        
-        if (buf) { 
+
+        if (buf) {
             DEBUGMSG_CORE(TRACE, "enqueue interface=%p buf=%p len=%zu (qlen=%zu)\n",
                   (void*)ifc, (void*)buf,
                   buf ? buf->datalen : 0, ifc ? ifc->qlen : 0);
@@ -202,13 +202,13 @@ ccnl_interface_enqueue(void (tx_done)(void*, int, int), struct ccnl_face_s *f,
 
         if (ifc->qlen >= CCNL_MAX_IF_QLEN) {
             if (buf) {
-                DEBUGMSG_CORE(WARNING, "  DROPPING buf=%p\n", (void*)buf); 
-                ccnl_free(buf); 
+                DEBUGMSG_CORE(WARNING, "  DROPPING buf=%p\n", (void*)buf);
+                ccnl_free(buf);
                 return;
             }
         }
-        
-        r = ifc->queue + ((ifc->qfront + ifc->qlen) % CCNL_MAX_IF_QLEN); 
+
+        r = ifc->queue + ((ifc->qfront + ifc->qlen) % CCNL_MAX_IF_QLEN);
         r->buf = buf;
         memcpy(&r->dst, dest, sizeof(sockunion));
         r->txdone = tx_done;
@@ -217,7 +217,7 @@ ccnl_interface_enqueue(void (tx_done)(void*, int, int), struct ccnl_face_s *f,
 
 #ifdef USE_SCHEDULER
         ccnl_sched_RTS(ifc->sched, 1, buf->datalen, ccnl, ifc);
-#else 
+#else
         ccnl_interface_CTS(ccnl, ifc);
 #endif
     }
@@ -526,7 +526,7 @@ ccnl_interest_broadcast(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *inter
     unsigned i = 0;
     for (i = 0; i < CCNL_MAX_INTERFACES; i++) {
         switch (ccnl->ifs[i].addr.sa.sa_family) {
-#ifdef USE_LINKLAYER 
+#ifdef USE_LINKLAYER
 #if !(defined(__FreeBSD__) || defined(__APPLE__))
             case (AF_PACKET): {
                 /* initialize address with 0xFF for broadcast */
