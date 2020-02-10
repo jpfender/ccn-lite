@@ -63,7 +63,7 @@
 #include "ccnl-core.h"
 #include "ccnl-pkt-builder.h"
 //#include "ccnl-ext.h"
-#include "ccnl-malloc.h"
+/*#include "ccnl-malloc.h"*/
 #include "ccnl-os-time.h"
 #include "ccnl-logging.h"
 #include "ccnl-pkt-builder.h"

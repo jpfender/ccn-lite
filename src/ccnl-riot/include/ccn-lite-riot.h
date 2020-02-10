@@ -45,10 +45,12 @@ extern "C" {
  *
  * @{
  */
+#ifndef USE_DEBUG_MALLOC
 #define ccnl_malloc(s)                  malloc(s)
 #define ccnl_calloc(n,s)                calloc(n,s)
 #define ccnl_realloc(p,s)               realloc(p,s)
 #define ccnl_free(p)                    free(p)
+#endif //USE_DEBUG_MALLOC
 /**
  * @}
  */
