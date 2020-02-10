@@ -390,7 +390,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     }
     printf("ccnl_interest_propagate\n");
 
-#ifdef ABC_CACHING
+#ifdef CACHING_ABC
     // reserialise packet
     struct ccnl_prefix_s *prefix = i->pkt->pfx;
     ccnl_interest_opts_u int_opts;
@@ -801,13 +801,13 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
                 DEBUGMSG_CORE(VERBOSE, "    Serve to face: %d (pkt=%p)\n",
                          pi->face->faceid, (void*) c->pkt);
 
-#ifdef ABC_CACHING
+#ifdef CACHING_ABC
                 if (ccnl_content_reserialise(c)) {
                     printf("ccnl-relay: reserialise failed!\n");
                 } else {
                     printf("ccnl-relay: reserialise successful!\n");
                 }
-#endif //ABC_CACHING
+#endif //CACHING_ABC
 
                 ccnl_send_pkt(ccnl, pi->face, c->pkt);
 
