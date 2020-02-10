@@ -112,7 +112,7 @@ debug_memdump(void)
 #else
         CONSOLE("addr %p %lu Bytes, %s:%d @%s\n",
                 (void *)(h + sizeof(struct mhdr)),
-                h->size, getBaseName(h->fname), h->lineno, h->tstamp);
+                (unsigned long)h->size, getBaseName(h->fname), h->lineno, h->tstamp);
 #endif
     }
     CONSOLE("[M] %s: @@@ memory dump ends\n", timestamp());

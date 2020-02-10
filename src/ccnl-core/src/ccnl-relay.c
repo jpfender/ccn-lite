@@ -419,7 +419,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
 
     struct ccnl_face_s *to = i->pkt->to;
 
-    ccnl_mkInterest(prefix, &int_opts, buf, &len, &buf_len);
+    ccnl_mkInterest(prefix, &int_opts, buf, buf+buf_len, &len, &buf_len);
 
     if (!buf) {
         printf("interest_propagate: mkInterest failed\n");
@@ -431,10 +431,10 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     unsigned char *start = buf;
     unsigned char *data = buf;
 
-    int typ;
-    int int_len;
+    uint64_t typ;
+    size_t int_len;
 
-    if (ccnl_ndntlv_dehead(&data, &len, (int*) &typ, &int_len) || (int) int_len > len) {
+    if (ccnl_ndntlv_dehead(&data, &len, &typ, &int_len) || int_len > len) {
         printf("interest_propagate: dehead failed\n");
         return;
     }
