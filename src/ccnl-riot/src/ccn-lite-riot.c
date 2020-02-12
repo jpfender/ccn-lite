@@ -45,7 +45,7 @@
 #include "ccnl-producer.h"
 #include "ccnl-pkt-builder.h"
 
-int my_betw = 0;
+uint16_t my_betw = 0;
 
 /**
  * @brief May be defined for a particular caching strategy

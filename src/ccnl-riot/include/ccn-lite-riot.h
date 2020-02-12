@@ -159,7 +159,7 @@ extern kernel_pid_t ccnl_event_loop_pid;
  */
 extern struct ccnl_relay_s ccnl_relay;
 
-extern int my_betw;
+extern uint16_t my_betw;
 
 /**
  * Struct Evtimer for various ccnl events
