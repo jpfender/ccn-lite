@@ -111,7 +111,9 @@ ccnl_fwd_handleContent(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     if (!ccnl_content_serve_pending(relay, c)) { // unsolicited content
         // CONFORM: "A node MUST NOT forward unsolicited data [...]"
         printf("  removed because no matching interest\n");
-        ccnl_content_free(c);
+        if (c) {
+            ccnl_content_free(c);
+        }
         return 0;
     }
 
@@ -121,13 +123,17 @@ ccnl_fwd_handleContent(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         res = ccnl_content_add2cache(relay, c);
         if (!res) {
             printf("ccnl-fwd: add2cache returned NULL\n");
-            ccnl_content_free(c);
+            if (c) {
+                ccnl_content_free(c);
+            }
         }
         int contlen = (int) (c->pkt->contlen > INT_MAX ? INT_MAX : c->pkt->contlen);
         printf("data after creating packet %.*s\n", contlen, c->pkt->content);
     } else {
         printf("  content not added to cache\n");
-        ccnl_content_free(c);
+        if (c) {
+            ccnl_content_free(c);
+        }
     }
 
 #ifdef USE_RONR

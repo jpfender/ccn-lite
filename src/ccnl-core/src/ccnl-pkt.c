@@ -65,7 +65,9 @@ ccnl_pkt_free(struct ccnl_pkt_s *pkt)
         if(pkt->buf){
             ccnl_free(pkt->buf);
         }
-        ccnl_free(pkt);
+        if (pkt) {
+            ccnl_free(pkt);
+        }
     }
 }
 

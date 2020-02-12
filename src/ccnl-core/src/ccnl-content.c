@@ -78,7 +78,9 @@ ccnl_content_free(struct ccnl_content_s *content)
             ccnl_pkt_free(content->pkt);
         }
         
-        ccnl_free(content);
+        if (content) {
+            ccnl_free(content);
+        }
 
         return 0;
     }
