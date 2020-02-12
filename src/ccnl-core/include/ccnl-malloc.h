@@ -30,7 +30,9 @@
 
 
 #ifdef USE_DEBUG_MALLOC
-struct mhdr {
+#ifndef USE_DEBUG_MALLOC_H
+#define USE_DEBUG_MALLOC_H
+extern struct mhdr {
     struct mhdr *next;
     char *fname;
     int lineno;
@@ -41,6 +43,7 @@ struct mhdr {
     char *tstamp; // Linux kernel (no double), also used for CCNL_UNIX
 #endif // CCNL_ARDUINO
 } *mem;
+#endif // USE_DEBUG_MALLOC_H
 #endif // USE_DEBUG_MALLOC
 
 

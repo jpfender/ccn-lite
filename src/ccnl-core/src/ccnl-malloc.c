@@ -25,6 +25,7 @@
 
 
 #ifdef USE_DEBUG_MALLOC
+struct mhdr *mem;
 
 #ifdef CCNL_ARDUINO
 void* debug_malloc(size_t s, const char *fn, int lno, double tstamp)
