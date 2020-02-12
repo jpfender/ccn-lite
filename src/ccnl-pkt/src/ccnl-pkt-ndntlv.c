@@ -382,6 +382,9 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
 
     return pkt;
 Bail:
+    /*if (prefix) {*/
+        /*ccnl_prefix_free(prefix);*/
+    /*}*/
     if (pkt) {
         ccnl_pkt_free(pkt);
     }

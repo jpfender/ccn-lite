@@ -447,6 +447,9 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
 
     if (ccnl_ndntlv_dehead(&data, &len, &typ, &int_len) || int_len > len) {
         printf("interest_propagate: dehead failed\n");
+        /*if (buf) {*/
+            /*ccnl_free(buf);*/
+        /*}*/
         return;
     }
 
@@ -458,6 +461,9 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
 
     if (!(i->pkt)) {
         printf("interest_propagate: bytes2pkt failed\n");
+        /*if (buf) {*/
+            /*ccnl_free(buf);*/
+        /*}*/
         return;
     }
 
@@ -625,6 +631,9 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
     if (!c || !c->pkt || !c->pkt->pfx) {
         printf("ccnl_content_add2cache: Couldn't add content to cache;\n");
         printf("\tcontent or packet or prefix are NULL\n");
+        /*if (c) {*/
+            /*ccnl_content_free(c);*/
+        /*}*/
         return NULL;
     }
 
@@ -639,6 +648,9 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
     for (cit = ccnl->contents; cit; cit = cit->next) {
         if (ccnl_prefix_cmp(c->pkt->pfx, NULL, cit->pkt->pfx, CMP_EXACT) == 0) {
             printf("--- Already in cache ---\n");
+            /*if (c) {*/
+                /*ccnl_content_free(c);*/
+            /*}*/
             return NULL;
         }
     }
@@ -1140,6 +1152,10 @@ ccnl_cs_add(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
         ccnl_content_serve_pending(ccnl, content);
         return 0;
     }
+
+    /*if (c) {*/
+        /*ccnl_content_free(c);*/
+    /*}*/
 
     return -1;
 }

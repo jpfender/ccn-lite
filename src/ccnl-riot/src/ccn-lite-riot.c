@@ -415,6 +415,11 @@ void
                 DEBUGMSG(VERBOSE, "ccn-lite: CS add\n");
                 content = (struct ccnl_content_s *)m.content.ptr;
                 ccnl_cs_add(ccnl, content);
+                /*if (ccnl_cs_add(ccnl, content)) {*/
+                    /*if (content) {*/
+                        /*ccnl_content_free(content);*/
+                    /*}*/
+                /*}*/
                 break;
             case CCNL_MSG_CS_DEL:
                 DEBUGMSG(VERBOSE, "ccn-lite: CS remove\n");
