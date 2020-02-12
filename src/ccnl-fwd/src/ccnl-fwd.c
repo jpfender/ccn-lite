@@ -119,15 +119,15 @@ ccnl_fwd_handleContent(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 
     if (relay->max_cache_entries != 0 && cache_strategy_cache(relay, c)) { // it's set to -1 or a limit
         printf("  adding content to cache\n");
-        /*struct ccnl_content_s *res = 0;*/
-        /*res = ccnl_content_add2cache(relay, c);*/
+        struct ccnl_content_s *res = 0;
+        res = ccnl_content_add2cache(relay, c);
         ccnl_content_add2cache(relay, c);
-        /*if (!res) {*/
-            /*printf("ccnl-fwd: add2cache returned NULL\n");*/
-            /*if (c) {*/
-                /*ccnl_content_free(c);*/
-            /*}*/
-        /*}*/
+        if (!res) {
+            printf("ccnl-fwd: add2cache returned NULL\n");
+            if (c) {
+                ccnl_content_free(c);
+            }
+        }
         int contlen = (int) (c->pkt->contlen > INT_MAX ? INT_MAX : c->pkt->contlen);
         printf("data after creating packet %.*s\n", contlen, c->pkt->content);
     } else {
