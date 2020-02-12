@@ -137,6 +137,7 @@ struct ccnl_ndntlv_interest_opts_s {
     uint32_t interestlifetime;  /**< Interest Lifetime Guider */
 #ifdef CACHING_ABC
     uint16_t centrality;
+    uint16_t src;
 #endif //CACHING_ABC
 };
 

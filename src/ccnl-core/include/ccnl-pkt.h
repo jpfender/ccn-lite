@@ -85,6 +85,7 @@ struct ccnl_pktdetail_ndntlv_s {
     uint64_t freshnessperiod;      /**< defines how long a node has to wait (after the arrival of this data before) marking it “non-fresh” */
 #ifdef CACHING_ABC
     uint16_t centrality;
+    uint16_t src;
 #endif
 };
 
