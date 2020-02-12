@@ -86,7 +86,7 @@ ccnl_ndntlv_dehead(uint8_t **buf, size_t *len,
     size_t maxlen = *len;
     uint64_t vallen_int = 0;
     if (ccnl_ndntlv_varlenint(buf, len, typ)) {
-        printf("dehead: varlenint(typ) failed\n");
+        /*printf("dehead: varlenint(typ) failed\n");*/
         return -1;
     }
     if (ccnl_ndntlv_varlenint(buf, len, &vallen_int)) {
@@ -177,10 +177,9 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
 
             prefix->nameptr = start + oldpos;
             while (len2 > 0) {
-                printf("bytes2pkt 180: before dehead:\n");
-                /*printf("\tcp: %s\n", cp);*/
-                printf("\tlen2: %lu\n", (unsigned long)len2);
-                printf("\ti: %lu\n", (unsigned long)i);
+                /*printf("bytes2pkt 180: before dehead:\n");*/
+                /*printf("\tlen2: %lu\n", (unsigned long)len2);*/
+                /*printf("\ti: %lu\n", (unsigned long)i);*/
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
                     printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                     goto Bail;
@@ -211,10 +210,9 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
             break;
         case NDN_TLV_Selectors:
             while (len2 > 0) {
-                printf("bytes2pkt 214: before dehead:\n");
-                /*printf("\tcp: %s\n", cp);*/
-                printf("\tlen2: %lu\n", (unsigned long)len2);
-                printf("\ti: %lu\n", (unsigned long)i);
+                /*printf("bytes2pkt 214: before dehead:\n");*/
+                /*printf("\tlen2: %lu\n", (unsigned long)len2);*/
+                /*printf("\ti: %lu\n", (unsigned long)i);*/
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
                     printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                     goto Bail;
@@ -253,10 +251,9 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
             break;
         case NDN_TLV_MetaInfo:
             while (len2 > 0) {
-                printf("bytes2pkt 256: before dehead:\n");
-                /*printf("\tcp: %s\n", cp);*/
-                printf("\tlen2: %lu\n", (unsigned long)len2);
-                printf("\ti: %lu\n", (unsigned long)i);
+                /*printf("bytes2pkt 256: before dehead:\n");*/
+                /*printf("\tlen2: %lu\n", (unsigned long)len2);*/
+                /*printf("\ti: %lu\n", (unsigned long)i);*/
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
                     printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                     goto Bail;
@@ -270,10 +267,9 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
                     pkt->s.ndntlv.freshnessperiod = ccnl_ndntlv_nonNegInt(cp, i);
                 }
                 if (typ == NDN_TLV_FinalBlockId) {
-                    printf("bytes2pkt 273: before dehead:\n");
-                    /*printf("\tcp: %s\n", cp);*/
-                    printf("\tlen2: %lu\n", (unsigned long)len2);
-                    printf("\ti: %lu\n", (unsigned long)i);
+                    /*printf("bytes2pkt 273: before dehead:\n");*/
+                    /*printf("\tlen2: %lu\n", (unsigned long)len2);*/
+                    /*printf("\ti: %lu\n", (unsigned long)i);*/
                     if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
                         printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                         goto Bail;
@@ -308,10 +304,9 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
 #ifdef USE_HMAC256
         case NDN_TLV_SignatureInfo:
             while (len2 > 0) {
-                printf("bytes2pkt 311: before dehead:\n");
-                /*printf("\tcp: %s\n", cp);*/
-                printf("\tlen2: %lu\n", (unsigned long)len2);
-                printf("\ti: %lu\n", (unsigned long)i);
+                /*printf("bytes2pkt 311: before dehead:\n");*/
+                /*printf("\tlen2: %lu\n", (unsigned long)len2);*/
+                /*printf("\ti: %lu\n", (unsigned long)i);*/
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
                     printf("ccnl_ndntlv_bytes2pkt: ccnl_ndntlv_dehead failed\n");
                     goto Bail;
@@ -336,10 +331,9 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
 #ifdef CACHING_ABC
         case NDN_TLV_Centrality:
             while (len2 > 0) {
-                printf("bytes2pkt CENTRALITY 339: before dehead:\n");
-                /*printf("\tcp: %s\n", cp);*/
-                printf("\tlen2: %lu\n", (unsigned long)len2);
-                printf("\ti: %lu\n", (unsigned long)i);
+                /*printf("bytes2pkt CENTRALITY 339: before dehead:\n");*/
+                /*printf("\tlen2: %lu\n", (unsigned long)len2);*/
+                /*printf("\ti: %lu\n", (unsigned long)i);*/
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
                     goto Bail;
                 }
