@@ -411,6 +411,9 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     int_opts.ndntlv.mustbefresh = false;
     int_opts.ndntlv.interestlifetime = i->pkt->s.ndntlv.interestlifetime;
     int_opts.ndntlv.centrality = i->pkt->s.ndntlv.centrality;
+    printf("ccnl-relay.c 414:\n");
+    printf("\tint_opts.ndntlv.centrality: %hu\n", int_opts.ndntlv.centrality);
+    printf("\ti->pkt->s.ndntlv.centrality: %hu\n", i->pkt->s.ndntlv.centrality);
 
     size_t len = 0;
     size_t buf_len = CCNL_MAX_PACKET_SIZE;
@@ -695,6 +698,9 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
     ccnl_data_opts_u opts;
     opts.ndntlv.freshnessperiod = c->pkt->s.ndntlv.freshnessperiod;
     opts.ndntlv.centrality = c->pkt->s.ndntlv.centrality;
+    printf("ccnl-relay.c 701:\n");
+    printf("\topts.ndntlv.centrality: %hu\n", opts.ndntlv.centrality);
+    printf("\tc->pkt->s.ndntlv.centrality: %hu\n", c->pkt->s.ndntlv.centrality);
     size_t len = c->pkt->contlen;
     size_t offs = CCNL_MAX_PACKET_SIZE;
     unsigned char _out[CCNL_MAX_PACKET_SIZE];

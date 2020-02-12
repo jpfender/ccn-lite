@@ -281,6 +281,9 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 
 #ifdef CACHING_ABC
                 c->pkt->s.ndntlv.centrality = (*pkt)->s.ndntlv.centrality;
+                printf("ccnl-fwd 283:\n");
+                printf("\tc->pkt->s.ndntlv.centrality: %hu\n", c->pkt->s.ndntlv.centrality);
+                printf("\t(*pkt)->s.ndntlv.centrality: %hu\n", (*pkt)->s.ndntlv.centrality);
                 if (ccnl_content_reserialise(c)) {
                     printf("ccnl-fwd: reserialise failed!\n");
                 }
