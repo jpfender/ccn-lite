@@ -37,6 +37,10 @@
 #include "ccnl-pkt-builder.h"
 #endif //CACHING_ABC
 
+#ifdef CACHING_ABC
+static unsigned char _int_buf[CCNL_MAX_PACKET_SIZE];
+#endif //CACHING_ABC
+
 struct ccnl_face_s*
 ccnl_get_face_or_create(struct ccnl_relay_s *ccnl, int ifndx,
                         struct sockaddr *sa, size_t addrlen)
@@ -410,21 +414,27 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     size_t len = 0;
     size_t buf_len = CCNL_MAX_PACKET_SIZE;
 
-    unsigned char *buf = (unsigned char*) ccnl_calloc(1, buf_len);
+    /*unsigned char *buf = (unsigned char*) ccnl_calloc(1, buf_len);*/
+    memset(_int_buf, '\0', buf_len);
+    unsigned char *buf = _int_buf;
 
-    if (!buf) {
-        printf("interest_propagate: buf calloc failed\n");
-        return;
-    }
+    /*if (!buf) {*/
+        /*printf("interest_propagate: buf calloc failed\n");*/
+        /*return;*/
+    /*}*/
 
     /*struct ccnl_face_s *to = i->pkt->to;*/
 
-    ccnl_mkInterest(prefix, &int_opts, buf, buf+buf_len, &len, &buf_len);
-
-    if (!buf) {
+    if(ccnl_mkInterest(prefix, &int_opts, buf, buf+buf_len, &len, &buf_len)) {
         printf("interest_propagate: mkInterest failed\n");
-        return;
+        /*if (buf) {*/
+            /*ccnl_free(buf);*/
+        /*}*/
     }
+
+    /*if (!buf) {*/
+        /*return;*/
+    /*}*/
 
     buf += buf_len;
 
