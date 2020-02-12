@@ -163,7 +163,7 @@ ccnl_fwd_handleFragment(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     if (from) {
         char *from_as_str = ccnl_addr2ascii(&(from->peer));
 
-        DEBUGMSG_CFWD(INFO, "  incoming fragment (%zd bytes) from=%s\n", 
+        DEBUGMSG_CFWD(INFO, "  incoming fragment (%zd bytes) from=%s\n",
             (*pkt)->buf->datalen, from_as_str ? from_as_str : "");
     }
 
@@ -288,9 +288,9 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 
                 ccnl_send_pkt(relay, from, c->pkt);
             } else {
-#ifdef CCNL_APP_RX 
+#ifdef CCNL_APP_RX
                 ccnl_app_RX(relay, c);
-#endif 
+#endif
             }
         }
 
