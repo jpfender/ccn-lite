@@ -204,6 +204,7 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     char s[CCNL_MAX_PREFIX_SIZE];
     (void) s;
     int32_t nonce = 0;
+    printf("ccnl_fwd_handleInterest()\n");
     if (pkt != NULL && (*pkt) != NULL && (*pkt)->s.ndntlv.nonce != NULL) {
         if ((*pkt)->s.ndntlv.nonce->datalen == 4) {
             memcpy(&nonce, (*pkt)->s.ndntlv.nonce->data, 4);
@@ -213,7 +214,7 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     if (from) {
         char *from_as_str = ccnl_addr2ascii(&(from->peer));
 #ifndef CCNL_LINUXKERNEL
-        DEBUGMSG_CFWD(INFO, "  incoming interest=<%s>%s nonce=%"PRIi32" from=%s\n",
+        printf("  incoming interest=<%s>%s nonce=%"PRIi32" from=%s\n",
              ccnl_prefix_to_str((*pkt)->pfx,s,CCNL_MAX_PREFIX_SIZE),
              ccnl_suite2str((*pkt)->suite), nonce,
              from_as_str ? from_as_str : "");
@@ -236,8 +237,12 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         return 0;
     }
 #endif
+    printf("ccnl-fwd: calling local_producer()\n");
     if (local_producer(relay, from, *pkt)) {
+        printf("\tlocal_producer failed\n");
         return 0;
+    } else {
+        printf("\tlocal_producer succeeded\n");
     }
 #if defined(USE_SUITE_CCNB) && defined(USE_MGMT)
     if ((*pkt)->suite == CCNL_SUITE_CCNB && (*pkt)->pfx->compcnt == 4 &&

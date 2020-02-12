@@ -199,14 +199,14 @@ ccnl_interface_enqueue(void (tx_done)(void*, int, int), struct ccnl_face_s *f,
         struct ccnl_txrequest_s *r;
 
         if (buf) {
-            DEBUGMSG_CORE(TRACE, "enqueue interface=%p buf=%p len=%zu (qlen=%zu)\n",
+            printf("enqueue interface=%p buf=%p len=%zu (qlen=%zu)\n",
                   (void*)ifc, (void*)buf,
                   buf ? buf->datalen : 0, ifc ? ifc->qlen : 0);
         }
 
         if (ifc->qlen >= CCNL_MAX_IF_QLEN) {
             if (buf) {
-                DEBUGMSG_CORE(WARNING, "  DROPPING buf=%p\n", (void*)buf);
+                printf("  DROPPING buf=%p\n", (void*)buf);
                 ccnl_free(buf);
                 return;
             }
@@ -261,7 +261,7 @@ void
 ccnl_face_CTS(struct ccnl_relay_s *ccnl, struct ccnl_face_s *f)
 {
     struct ccnl_buf_s *buf;
-    DEBUGMSG_CORE(TRACE, "CTS face=%p sched=%p\n", (void*)f, (void*)f->sched);
+    printf("CTS face=%p sched=%p\n", (void*)f, (void*)f->sched);
 
     if (!f->frag || f->frag->protocol == CCNL_FRAG_NONE) {
         buf = ccnl_face_dequeue(ccnl, f);
@@ -302,17 +302,18 @@ int
 ccnl_face_enqueue(struct ccnl_relay_s *ccnl, struct ccnl_face_s *to,
                  struct ccnl_buf_s *buf)
 {
+    printf("ccnl_face_enqueue()\n");
     struct ccnl_buf_s *msg;
     if (buf == NULL) {
-        DEBUGMSG_CORE(ERROR, "enqueue face: buf most not be NULL\n");
+        printf("enqueue face: buf most not be NULL\n");
         return -1;
     }
-    DEBUGMSG_CORE(TRACE, "enqueue face=%p (id=%d.%d) buf=%p len=%zd\n",
+    printf("enqueue face=%p (id=%d.%d) buf=%p len=%zd\n",
              (void*) to, ccnl->id, to->faceid, (void*) buf, buf ? buf->datalen : 0);
 
     for (msg = to->outq; msg; msg = msg->next) { // already in the queue?
         if (buf_equal(msg, buf)) {
-            DEBUGMSG_CORE(VERBOSE, "    not enqueued because already there\n");
+            printf("    not enqueued because already there\n");
             ccnl_free(buf);
             return -1;
         }
@@ -1103,8 +1104,8 @@ ccnl_interface_CTS(void *aux1, void *aux2)
     struct ccnl_if_s *ifc = (struct ccnl_if_s *)aux2;
     struct ccnl_txrequest_s *r, req;
 
-    DEBUGMSG_CORE(TRACE, "interface_CTS interface=%p, qlen=%zu, sched=%p\n",
-             (void*)ifc, ifc->qlen, (void*)ifc->sched);
+    printf("interface_CTS interface=%p, qlen=%lu, sched=%p\n",
+             (void*)ifc, (unsigned long)ifc->qlen, (void*)ifc->sched);
 
     if (ifc->qlen <= 0) {
         return;
