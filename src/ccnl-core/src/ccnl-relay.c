@@ -709,17 +709,19 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
     size_t arg_len = ccnl_ndntlv_prependContent(c->pkt->pfx,
             c->pkt->content, len, NULL, &(opts.ndntlv),
             &offs, _out, &reslen);
+    (void) arg_len;
 
     unsigned char *olddata;
     unsigned char *data = olddata = _out + offs;
 
     unsigned typ;
+    size_t int_len;
 
-    /*printf("reserialise: before dehead:\n");*/
-    /*printf("\treslen: %lu\n", (unsigned long)reslen);*/
-    /*printf("\tlen: %lu\n", (unsigned long)len);*/
-    if (ccnl_ndntlv_dehead(&data, &arg_len, (uint64_t*) &typ,
-                &len) || typ != NDN_TLV_Data) {
+    printf("reserialise: before dehead:\n");
+    printf("\treslen: %lu\n", (unsigned long)len);
+    printf("\tint_len: %lu\n", (unsigned long)int_len);
+    if (ccnl_ndntlv_dehead(&data, &reslen, (uint64_t*) &typ,
+                &int_len) || typ != NDN_TLV_Data) {
         printf("reserialise: dehead failed\n");
         return -1;
     }
@@ -728,7 +730,7 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
         ccnl_pkt_free(c->pkt);
     }
 
-    c->pkt = ccnl_ndntlv_bytes2pkt(typ, olddata, &data, &arg_len);
+    c->pkt = ccnl_ndntlv_bytes2pkt(typ, olddata, &data, &reslen);
 
     return 0;
 }
