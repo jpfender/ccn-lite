@@ -712,7 +712,7 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
     /*printf("reserialise: before dehead:\n");*/
     /*printf("\treslen: %lu\n", (unsigned long)reslen);*/
     /*printf("\tlen: %lu\n", (unsigned long)len);*/
-    if (ccnl_ndntlv_dehead(&data, &reslen, (uint64_t*) &typ,
+    if (ccnl_ndntlv_dehead(&data, &arg_len, (uint64_t*) &typ,
                 &len) || typ != NDN_TLV_Data) {
         printf("reserialise: dehead failed\n");
         return -1;
