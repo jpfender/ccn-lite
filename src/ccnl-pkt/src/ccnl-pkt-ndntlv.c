@@ -99,7 +99,7 @@ ccnl_ndntlv_dehead(uint8_t **buf, size_t *len,
     }
     *vallen = (size_t) vallen_int;
     if (*vallen > maxlen) {
-        printf("dehead: vallen > maxlen\n");
+        printf("dehead: vallen > maxlen (%lu > %lu)\n", (unsigned long)*vallen, (unsigned long)maxlen);
         return -1; // Return failure (-1) if length value in the tlv is longer than the buffer
     }
     return 0;
