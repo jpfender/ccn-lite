@@ -772,7 +772,7 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
     struct ccnl_interest_s *i;
     struct ccnl_face_s *f;
     int cnt = 0;
-    DEBUGMSG_CORE(TRACE, "ccnl_content_serve_pending\n");
+    printf("ccnl_content_serve_pending\n");
     char s[CCNL_MAX_PREFIX_SIZE];
 
     for (f = ccnl->faces; f; f = f->next){
