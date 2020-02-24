@@ -108,10 +108,10 @@ ccnl_fwd_handleContent(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         return 0;
     }
 
-    printf("RCV_DAT %s %lu %s\n",
-            ccnl_prefix_to_str(c->pkt->pfx, s, CCNL_MAX_PREFIX_SIZE),
-            xtimer_now_usec(),
-            c->pkt->content);
+    /*printf("RCV_DAT %s %lu %s\n",*/
+            /*ccnl_prefix_to_str(c->pkt->pfx, s, CCNL_MAX_PREFIX_SIZE),*/
+            /*xtimer_now_usec(),*/
+            /*c->pkt->content);*/
 
     if (!ccnl_content_serve_pending(relay, c)) { // unsolicited content
         // CONFORM: "A node MUST NOT forward unsolicited data [...]"
@@ -296,13 +296,18 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 
 #ifdef CACHING_ABC
                 c->pkt->s.ndntlv.centrality = (*pkt)->s.ndntlv.centrality;
-                printf("ccnl-fwd 283:\n");
-                printf("\tc->pkt->s.ndntlv.centrality: %hu\n", c->pkt->s.ndntlv.centrality);
-                printf("\t(*pkt)->s.ndntlv.centrality: %hu\n", (*pkt)->s.ndntlv.centrality);
+#endif //CACHING_ABC
+#ifdef CACHING_LCD
+                c->pkt->s.ndntlv.tsb = 0;
+#endif //CACHING_LCD
+
+#if defined(CACHING_ABC) || defined(CACHING_LCD)
                 if (ccnl_content_reserialise(c)) {
                     printf("ccnl-fwd: reserialise failed!\n");
+                } else {
+                    printf("ccnl-fwd: reserialise successful!\n");
                 }
-#endif //CACHING_ABC
+#endif //CACHING_ABC || CACHING_LCD
 
                 ccnl_send_pkt(relay, from, c->pkt);
 
@@ -350,13 +355,8 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
         if(propagate) {
 
 #ifdef CACHING_ABC
-            printf("[BETW] Forwarding Interest.");
-            printf("\tmy betw: %d, target betw: %d\n",
-                    my_betw, i->pkt->s.ndntlv.centrality);
-
             if (my_betw > i->pkt->s.ndntlv.centrality) {
                 i->pkt->s.ndntlv.centrality = my_betw;
-                printf("[BETW] Set target betw to %d\n", i->pkt->s.ndntlv.centrality);
             }
 #endif //CACHING_ABC
 

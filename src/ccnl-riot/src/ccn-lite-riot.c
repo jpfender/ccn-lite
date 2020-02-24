@@ -634,10 +634,6 @@ ccnl_send_interest(struct ccnl_prefix_s *prefix, unsigned char *buf, int buf_len
     size_t int_len;
 
     /* TODO: support other suites */
-    /*printf("send_interest: before dehead:\n");*/
-    /*printf("\tdata: %s\n", data);*/
-    /*printf("\tlen: %lu\n", (unsigned long)len);*/
-    /*printf("\tint_len: %lu\n", (unsigned long)int_len);*/
     if (ccnl_ndntlv_dehead(&data, &len, &typ, &int_len) || (int_len > len)) {
         printf("  invalid packet format\n");
         return -3;

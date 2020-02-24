@@ -331,9 +331,6 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
 #ifdef CACHING_ABC
         case NDN_TLV_Centrality:
             while (len2 > 0) {
-                /*printf("bytes2pkt CENTRALITY 339: before dehead:\n");*/
-                /*printf("\tlen2: %lu\n", (unsigned long)len2);*/
-                /*printf("\ti: %lu\n", (unsigned long)i);*/
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
                     goto Bail;
                 }
@@ -342,8 +339,6 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
                 }
                 if (typ == NDN_TLV_CentralityVal) {
                     pkt->s.ndntlv.centrality = ccnl_ndntlv_nonNegInt(cp, i);
-                    printf("ccnl-pkt-ndntlv.c 345:\n");
-                    printf("\tpkt->s.ndntlv.centrality: %hu\n", pkt->s.ndntlv.centrality);
                 }
                 cp += i;
                 len2 -= i;
@@ -734,8 +729,6 @@ ccnl_ndntlv_prependContent(struct ccnl_prefix_s *name,
 
 #ifdef CACHING_ABC
     int cc_offset = *offset;
-    printf("ccnl-pkt-ndntlv.c 737:\n");
-    printf("\topts->centrality: %hu\n", opts->centrality);
     if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_CentralityVal,
                 opts->centrality, offset, buf) < 0)
         return -1;

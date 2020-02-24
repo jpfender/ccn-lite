@@ -427,34 +427,17 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     int_opts.ndntlv.mustbefresh = false;
     int_opts.ndntlv.interestlifetime = i->pkt->s.ndntlv.interestlifetime;
     int_opts.ndntlv.centrality = i->pkt->s.ndntlv.centrality;
-    printf("ccnl-relay.c 414:\n");
-    printf("\tint_opts.ndntlv.centrality: %hu\n", int_opts.ndntlv.centrality);
-    printf("\ti->pkt->s.ndntlv.centrality: %hu\n", i->pkt->s.ndntlv.centrality);
 
     size_t len = 0;
     size_t buf_len = CCNL_MAX_PACKET_SIZE;
 
-    /*unsigned char *buf = (unsigned char*) ccnl_calloc(1, buf_len);*/
     memset(_int_buf, '\0', buf_len);
     unsigned char *buf = _int_buf;
 
-    /*if (!buf) {*/
-        /*printf("interest_propagate: buf calloc failed\n");*/
-        /*return;*/
-    /*}*/
-
-    /*struct ccnl_face_s *to = i->pkt->to;*/
 
     if(ccnl_mkInterest(prefix, &int_opts, buf, buf+buf_len, &len, &buf_len)) {
         printf("interest_propagate: mkInterest failed\n");
-        /*if (buf) {*/
-            /*ccnl_free(buf);*/
-        /*}*/
     }
-
-    /*if (!buf) {*/
-        /*return;*/
-    /*}*/
 
     buf += buf_len;
 
@@ -466,9 +449,6 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
 
     if (ccnl_ndntlv_dehead(&data, &len, &typ, &int_len) || int_len > len) {
         printf("interest_propagate: dehead failed\n");
-        /*if (buf) {*/
-            /*ccnl_free(buf);*/
-        /*}*/
         return;
     }
 
@@ -480,13 +460,9 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
 
     if (!(i->pkt)) {
         printf("interest_propagate: bytes2pkt failed\n");
-        /*if (buf) {*/
-            /*ccnl_free(buf);*/
-        /*}*/
         return;
     }
 
-    /*i->pkt->to = to;*/
 #endif //CACHING_ABC
 
     // CONFORM: "A node MUST implement some strategy rule, even if it is only to
@@ -730,10 +706,12 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
             );
 
 #ifdef CCNL_RIOT
+#if 0
             /* set cache timeout timer if content is not static */
-            if (!(c->flags & CCNL_CONTENT_FLAGS_STATIC)) {
-                ccnl_evtimer_set_cs_timeout(c);
-            }
+            /*if (!(c->flags & CCNL_CONTENT_FLAGS_STATIC)) {*/
+                /*ccnl_evtimer_set_cs_timeout(c);*/
+            /*}*/
+#endif
 #endif
     }
 
@@ -748,9 +726,6 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
     ccnl_data_opts_u opts;
     opts.ndntlv.freshnessperiod = c->pkt->s.ndntlv.freshnessperiod;
     opts.ndntlv.centrality = c->pkt->s.ndntlv.centrality;
-    printf("ccnl-relay.c 701:\n");
-    printf("\topts.ndntlv.centrality: %hu\n", opts.ndntlv.centrality);
-    printf("\tc->pkt->s.ndntlv.centrality: %hu\n", c->pkt->s.ndntlv.centrality);
     size_t len = c->pkt->contlen;
     size_t offs = CCNL_MAX_PACKET_SIZE;
     unsigned char _out[CCNL_MAX_PACKET_SIZE];
@@ -767,9 +742,6 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
     unsigned typ;
     size_t int_len;
 
-    printf("reserialise: before dehead:\n");
-    printf("\treslen: %lu\n", (unsigned long)len);
-    printf("\tint_len: %lu\n", (unsigned long)int_len);
     if (ccnl_ndntlv_dehead(&data, &reslen, (uint64_t*) &typ,
                 &int_len) || typ != NDN_TLV_Data) {
         printf("reserialise: dehead failed\n");
