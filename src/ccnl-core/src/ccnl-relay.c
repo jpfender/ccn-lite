@@ -654,9 +654,6 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
     if (!c || !c->pkt || !c->pkt->pfx) {
         printf("ccnl_content_add2cache: Couldn't add content to cache;\n");
         printf("\tcontent or packet or prefix are NULL\n");
-        /*if (c) {*/
-            /*ccnl_content_free(c);*/
-        /*}*/
         return NULL;
     }
 
@@ -671,9 +668,6 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
     for (cit = ccnl->contents; cit; cit = cit->next) {
         if (ccnl_prefix_cmp(c->pkt->pfx, NULL, cit->pkt->pfx, CMP_EXACT) == 0) {
             printf("--- Already in cache ---\n");
-            /*if (c) {*/
-                /*ccnl_content_free(c);*/
-            /*}*/
             return NULL;
         }
     }
@@ -746,6 +740,14 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
             &offs, _out, &reslen);
     (void) arg_len;
 
+    /*if (c->pkt->pfx) {*/
+        /*ccnl_prefix_free(c->pkt->pfx);*/
+    /*}*/
+
+    if (c->pkt) {
+        ccnl_pkt_free(c->pkt);
+    }
+
     unsigned char *olddata;
     unsigned char *data = olddata = _out + offs;
 
@@ -756,10 +758,6 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
                 &int_len) || typ != NDN_TLV_Data) {
         printf("reserialise: dehead failed\n");
         return -1;
-    }
-
-    if (c->pkt) {
-        ccnl_pkt_free(c->pkt);
     }
 
     c->pkt = ccnl_ndntlv_bytes2pkt(typ, olddata, &data, &reslen);
