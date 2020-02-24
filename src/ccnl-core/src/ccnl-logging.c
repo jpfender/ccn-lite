@@ -97,6 +97,8 @@ debug_memdump(void)
 {
     struct mhdr *h;
 
+    unsigned long bytes = 0;
+
     CONSOLE("[M] %s: @@@ memory dump starts\n", timestamp());
     for (h = mem; h; h = h->next) {
 #ifdef CCNL_ARDUINO
@@ -113,9 +115,12 @@ debug_memdump(void)
         CONSOLE("addr %p %lu Bytes, %s:%d @%s\n",
                 (void *)(h + sizeof(struct mhdr)),
                 (unsigned long)h->size, getBaseName(h->fname), h->lineno, h->tstamp);
+
+        bytes += (unsigned long)h->size;
 #endif
     }
     CONSOLE("[M] %s: @@@ memory dump ends\n", timestamp());
+    CONSOLE("[M] %s: @@@ total memory used: %lu Bytes\n", timestamp(), bytes);
 }
 #endif //USE_DEBUG_MALLOC
 #endif //USE_DEBUG
