@@ -92,7 +92,6 @@
 // ABC TLVs
 #define NDN_TLV_Centrality              0x60
 #define NDN_TLV_CentralityVal           0x61
-#define NDN_TLV_CentralitySrc           0x62
 #endif //CACHING_ABC
 
 // reserved values:
@@ -137,7 +136,6 @@ struct ccnl_ndntlv_interest_opts_s {
     uint32_t interestlifetime;  /**< Interest Lifetime Guider */
 #ifdef CACHING_ABC
     uint16_t centrality;
-    uint16_t src;
 #endif //CACHING_ABC
 };
 

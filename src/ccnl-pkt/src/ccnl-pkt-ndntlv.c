@@ -334,9 +334,6 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
                 if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
                     goto Bail;
                 }
-                if (typ == NDN_TLV_CentralitySrc) {
-                    pkt->s.ndntlv.src = ccnl_ndntlv_nonNegInt(cp, i);
-                }
                 if (typ == NDN_TLV_CentralityVal) {
                     pkt->s.ndntlv.centrality = ccnl_ndntlv_nonNegInt(cp, i);
                 }
