@@ -752,7 +752,7 @@ ccnl_content_reserialise(struct ccnl_content_s *c)
     unsigned char *data = olddata = _out + offs;
 
     unsigned typ;
-    size_t int_len;
+    size_t int_len = 0;
 
     if (ccnl_ndntlv_dehead(&data, &reslen, (uint64_t*) &typ,
                 &int_len) || typ != NDN_TLV_Data) {
