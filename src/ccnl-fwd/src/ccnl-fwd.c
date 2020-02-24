@@ -45,6 +45,11 @@
 
 #include "ccn-lite-riot.h"
 
+extern uint32_t num_ints;
+extern uint32_t num_datas;
+extern uint32_t num_pits;
+extern uint32_t num_cs;
+
 //#include "ccnl-logging.h"
 
 #ifdef NEEDS_PREFIX_MATCHING
@@ -214,6 +219,16 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 
     if (from) {
         char *from_as_str = ccnl_addr2ascii(&(from->peer));
+
+        printf("irx;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long)num_pits,
+                (unsigned long)num_cs
+        );
+
 #ifndef CCNL_LINUXKERNEL
         printf("  incoming interest=<%s>%s nonce=%"PRIi32" from=%s\n",
              ccnl_prefix_to_str((*pkt)->pfx,s,CCNL_MAX_PREFIX_SIZE),
@@ -290,6 +305,17 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 #endif //CACHING_ABC
 
                 ccnl_send_pkt(relay, from, c->pkt);
+
+                printf("pp;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                        (unsigned long) xtimer_now_usec64(),
+                        my_betw,
+                        (unsigned long) num_ints,
+                        (unsigned long) num_datas,
+                        (unsigned long)num_pits,
+                        (unsigned long)num_cs
+                );
+
+
             } else {
 #ifdef CCNL_APP_RX
                 ccnl_app_RX(relay, c);

@@ -47,6 +47,11 @@
 
 uint16_t my_betw = 0;
 
+extern uint32_t num_ints;
+extern uint32_t num_datas;
+extern uint32_t num_pits;
+extern uint32_t num_cs;
+
 /**
  * @brief May be defined for a particular caching strategy
  */
@@ -101,7 +106,7 @@ struct ccnl_relay_s ccnl_relay;
 /**
  * @brief Local loopback face
  */
-static struct ccnl_face_s *loopback_face;
+struct ccnl_face_s *loopback_face;
 
 /**
  * @brief Debugging level
@@ -312,6 +317,16 @@ ccnl_app_RX(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
         gnrc_pktbuf_release(pkt);
     }
 
+    num_datas++;
+    printf("arx;%lu;%hu;%lu;%lu;%lu;%lu\n",
+            (unsigned long) xtimer_now_usec64(),
+            my_betw,
+            (unsigned long) num_ints,
+            (unsigned long) num_datas,
+            (unsigned long)num_pits,
+            (unsigned long)num_cs
+    );
+
     return 0;
 }
 
@@ -401,6 +416,17 @@ void
             case GNRC_NETAPI_MSG_TYPE_SND:
                 DEBUGMSG(DEBUG, "ccn-lite: GNRC_NETAPI_MSG_TYPE_SND received\n");
                 pkt = (struct ccnl_pkt_s *) m.content.ptr;
+
+                num_ints++;
+                printf("q;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                        (unsigned long) xtimer_now_usec64(),
+                        my_betw,
+                        (unsigned long) num_ints,
+                        (unsigned long) num_datas,
+                        (unsigned long)num_pits,
+                        (unsigned long)num_cs
+                );
+
                 ccnl_fwd_handleInterest(ccnl, loopback_face, &pkt, ccnl_ndntlv_cMatch);
                 ccnl_pkt_free(pkt);
                 break;
@@ -456,6 +482,17 @@ void
                 break;
             case CCNL_MSG_INT_TIMEOUT:
                 ccnl_int = (struct ccnl_interest_s *)m.content.ptr;
+
+                num_pits--;
+                printf("idel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                        (unsigned long) xtimer_now_usec64(),
+                        my_betw,
+                        (unsigned long) num_ints,
+                        (unsigned long) num_datas,
+                        (unsigned long)num_pits,
+                        (unsigned long)num_cs
+                );
+
                 ccnl_interest_remove(ccnl, ccnl_int);
                 break;
             case CCNL_MSG_FACE_TIMEOUT:

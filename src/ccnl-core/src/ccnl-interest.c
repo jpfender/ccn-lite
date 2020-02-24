@@ -43,6 +43,11 @@
 #include "ccn-lite-riot.h"
 #endif
 
+extern uint32_t num_ints;
+extern uint32_t num_datas;
+extern uint32_t num_pits;
+extern uint32_t num_cs;
+
 struct ccnl_interest_s*
 ccnl_interest_new(struct ccnl_relay_s *ccnl, struct ccnl_face_s *from,
                   struct ccnl_pkt_s **pkt)
@@ -77,6 +82,16 @@ ccnl_interest_new(struct ccnl_relay_s *ccnl, struct ccnl_face_s *from,
     }
 
     DBL_LINKED_LIST_ADD(ccnl->pit, i);
+
+    num_pits++;
+    printf("icr;%lu;%hu;%lu;%lu;%lu;%lu\n",
+            (unsigned long) xtimer_now_usec64(),
+            my_betw,
+            (unsigned long) num_ints,
+            (unsigned long) num_datas,
+            (unsigned long)num_pits,
+            (unsigned long)num_cs
+    );
 
     ccnl->pitcnt++;
 

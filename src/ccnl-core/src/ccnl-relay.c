@@ -41,6 +41,11 @@
 static unsigned char _int_buf[CCNL_MAX_PACKET_SIZE];
 #endif //CACHING_ABC
 
+extern uint32_t num_ints;
+extern uint32_t num_datas;
+extern uint32_t num_pits;
+extern uint32_t num_cs;
+
 struct ccnl_face_s*
 ccnl_get_face_or_create(struct ccnl_relay_s *ccnl, int ifndx,
                         struct sockaddr *sa, size_t addrlen)
@@ -158,6 +163,17 @@ ccnl_face_remove(struct ccnl_relay_s *ccnl, struct ccnl_face_s *f)
         } else {
             DEBUGMSG_CORE(TRACE, "before interest_remove 0x%p\n",
                           (void*)pit);
+
+            num_pits--;
+            printf("idel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                    (unsigned long) xtimer_now_usec64(),
+                    my_betw,
+                    (unsigned long) num_ints,
+                    (unsigned long) num_datas,
+                    (unsigned long)num_pits,
+                    (unsigned long)num_cs
+            );
+
             pit = ccnl_interest_remove(ccnl, pit);
         }
     }
@@ -519,6 +535,18 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
             }
             if (fwd->face) {
                 ccnl_send_pkt(ccnl, fwd->face, i->pkt);
+
+                if (i->from != loopback_face) {
+                    printf("ip;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                            (unsigned long) xtimer_now_usec64(),
+                            my_betw,
+                            (unsigned long) num_ints,
+                            (unsigned long) num_datas,
+                            (unsigned long)num_pits,
+                            (unsigned long)num_cs
+                    );
+                }
+
             }
 #if defined(USE_RONR)
             matching_face = 1;
@@ -621,6 +649,17 @@ ccnl_content_remove(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 #ifdef CCNL_RIOT
     evtimer_del((evtimer_t *)(&ccnl_evtimer), (evtimer_event_t *)&c->evtmsg_cstimeout);
 #endif
+
+    num_cs--;
+    printf("cdel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+            (unsigned long) xtimer_now_usec64(),
+            my_betw,
+            (unsigned long) num_ints,
+            (unsigned long) num_datas,
+            (unsigned long)num_pits,
+            (unsigned long)num_cs
+    );
+
     return c2;
 }
 
@@ -679,6 +718,17 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
          (ccnl->contentcnt <= ccnl->max_cache_entries)) {
             DBL_LINKED_LIST_ADD(ccnl->contents, c);
             ccnl->contentcnt++;
+
+            num_cs++;
+            printf("ca;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                    (unsigned long) xtimer_now_usec64(),
+                    my_betw,
+                    (unsigned long) num_ints,
+                    (unsigned long) num_datas,
+                    (unsigned long)num_pits,
+                    (unsigned long)num_cs
+            );
+
 #ifdef CCNL_RIOT
             /* set cache timeout timer if content is not static */
             if (!(c->flags & CCNL_CONTENT_FLAGS_STATIC)) {
@@ -793,6 +843,17 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
         if(i && ! i->pending){
             DEBUGMSG_CORE(WARNING, "releasing interest 0x%p OK?\n", (void*)i);
             c->flags |= CCNL_CONTENT_FLAGS_STATIC;
+
+            num_pits--;
+            printf("idel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                    (unsigned long) xtimer_now_usec64(),
+                    my_betw,
+                    (unsigned long) num_ints,
+                    (unsigned long) num_datas,
+                    (unsigned long)num_pits,
+                    (unsigned long)num_cs
+            );
+
             i = ccnl_interest_remove(ccnl, i);
 
             c->served_cnt++;
@@ -841,6 +902,14 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 
                 ccnl_send_pkt(ccnl, pi->face, c->pkt);
 
+                printf("csp;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                    (unsigned long) xtimer_now_usec64(),
+                    my_betw,
+                    (unsigned long) num_ints,
+                    (unsigned long) num_datas,
+                    (unsigned long)num_pits,
+                    (unsigned long)num_cs
+                );
 
             } else {// upcall to deliver content to local client
 #ifdef CCNL_APP_RX
@@ -850,6 +919,17 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
             c->served_cnt++;
             cnt++;
         }
+
+        num_pits--;
+        printf("idel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long)num_pits,
+                (unsigned long)num_cs
+        );
+
         i = ccnl_interest_remove(ccnl, i);
     }
 
