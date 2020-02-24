@@ -343,6 +343,21 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
             break;
 #endif //CACHING_ABC
 
+#ifdef CACHING_LCD
+        case NDN_TLV_LCD:
+            while (len2 > 0) {
+                if (ccnl_ndntlv_dehead(&cp, &len2, &typ, &i)) {
+                    goto Bail;
+                }
+                if (typ == NDN_TLV_LCDTSB) {
+                    pkt->s.ndntlv.tsb = ccnl_ndntlv_nonNegInt(cp, i);
+                }
+                cp += i;
+                len2 -= i;
+            }
+            break;
+#endif //CACHING_LCD
+
         default:
             break;
         }
@@ -632,6 +647,16 @@ ccnl_ndntlv_prependInterest(struct ccnl_prefix_s *name, int scope, struct ccnl_n
         return -1;
 #endif //CACHING_ABC
 
+#ifdef CACHING_LCD
+    int lcd_offset = *offset;
+    if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_LCDTSB,
+                                        opts->tsb, offset, buf) < 0)
+        return -1;
+    if (ccnl_ndntlv_prependTL(NDN_TLV_LCD, lcd_offset - *offset,
+                offset, buf) < 0)
+        return -1;
+#endif //CACHING_LCD
+
     if (ccnl_ndntlv_prependName(name, offset, buf)) {
         return -1;
     }
@@ -733,6 +758,16 @@ ccnl_ndntlv_prependContent(struct ccnl_prefix_s *name,
                 offset, buf) < 0)
         return -1;
 #endif //CACHING_ABC
+
+#ifdef CACHING_LCD
+    int lcd_offset = *offset;
+    if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_LCDTSB,
+                                        opts->tsb, offset, buf) < 0)
+        return -1;
+    if (ccnl_ndntlv_prependTL(NDN_TLV_LCD, lcd_offset - *offset,
+                offset, buf) < 0)
+        return -1;
+#endif //CACHING_LCD
 
     // mandatory
     if (ccnl_ndntlv_prependName(name, offset, buf)) {

@@ -33,13 +33,13 @@
 #include "ccn-lite-riot.h"
 #endif
 
-#ifdef CACHING_ABC
+#if defined(CACHING_ABC) || defined(CACHING_LCD)
 #include "ccnl-pkt-builder.h"
-#endif //CACHING_ABC
+#endif //CACHING_ABC || CACHING_LCD
 
-#ifdef CACHING_ABC
+#if defined(CACHING_ABC) || defined(CACHING_LCD)
 static unsigned char _int_buf[CCNL_MAX_PACKET_SIZE];
-#endif //CACHING_ABC
+#endif //CACHING_ABC || CACHING_LCD
 
 extern uint32_t num_ints;
 extern uint32_t num_datas;
@@ -411,7 +411,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     }
     printf("ccnl_interest_propagate\n");
 
-#ifdef CACHING_ABC
+#if defined(CACHING_ABC) || defined(CACHING_LCD)
     // reserialise packet
     struct ccnl_prefix_s *prefix = i->pkt->pfx;
     ccnl_interest_opts_u int_opts;
@@ -426,7 +426,12 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
     int_opts.ndntlv.nonce = nonce;
     int_opts.ndntlv.mustbefresh = false;
     int_opts.ndntlv.interestlifetime = i->pkt->s.ndntlv.interestlifetime;
+#ifdef CACHING_ABC
     int_opts.ndntlv.centrality = i->pkt->s.ndntlv.centrality;
+#endif //CACHING_ABC
+#ifdef CACHING_LCD
+    int_opts.ndntlv.tsb = i->pkt->s.ndntlv.tsb;
+#endif //CACHING_LCD
 
     size_t len = 0;
     size_t buf_len = CCNL_MAX_PACKET_SIZE;
@@ -463,7 +468,7 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
         return;
     }
 
-#endif //CACHING_ABC
+#endif //CACHING_ABC || CACHING_LCD
 
     // CONFORM: "A node MUST implement some strategy rule, even if it is only to
     // transmit an Interest Message on all listed dest faces in sequence."
@@ -718,14 +723,19 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
     return c;
 }
 
-#ifdef CACHING_ABC
+#if defined(CACHING_ABC) || defined(CACHING_LCD)
 int
 ccnl_content_reserialise(struct ccnl_content_s *c)
 {
     printf("ccnl_content_reserialise()\n");
     ccnl_data_opts_u opts;
     opts.ndntlv.freshnessperiod = c->pkt->s.ndntlv.freshnessperiod;
+#ifdef CACHING_ABC
     opts.ndntlv.centrality = c->pkt->s.ndntlv.centrality;
+#endif //CACHING_ABC
+#ifdef CACHING_LCD
+    opts.ndntlv.tsb = c->pkt->s.ndntlv.tsb + 1;
+#endif //CACHING_LCD
     size_t len = c->pkt->contlen;
     size_t offs = CCNL_MAX_PACKET_SIZE;
     unsigned char _out[CCNL_MAX_PACKET_SIZE];
@@ -864,13 +874,13 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
                 DEBUGMSG_CORE(VERBOSE, "    Serve to face: %d (pkt=%p)\n",
                          pi->face->faceid, (void*) c->pkt);
 
-#ifdef CACHING_ABC
+#if defined(CACHING_ABC) || defined(CACHING_LCD)
                 if (ccnl_content_reserialise(c)) {
                     printf("ccnl-relay: reserialise failed!\n");
                 } else {
                     printf("ccnl-relay: reserialise successful!\n");
                 }
-#endif //CACHING_ABC
+#endif //CACHING_ABC || CACHING_LCD
 
                 ccnl_send_pkt(ccnl, pi->face, c->pkt);
 

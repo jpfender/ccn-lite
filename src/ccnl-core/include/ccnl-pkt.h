@@ -86,6 +86,9 @@ struct ccnl_pktdetail_ndntlv_s {
 #ifdef CACHING_ABC
     uint16_t centrality;
 #endif
+#ifdef CACHING_LCD
+    uint8_t tsb;
+#endif //CACHING_LCD
 };
 
 struct ccnl_pkt_s {

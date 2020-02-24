@@ -88,6 +88,12 @@
 #define NDN_TLV_NdnlpFragment           0x52
 #define NDN_TLV_Frag_BeginEndFields     0x5c
 
+#ifdef CACHING_LCD
+// LCD TLVs
+#define NDN_TLV_LCD               0x5d
+#define NDN_TLV_LCDTSB            0x5f
+#endif //CACHING_LCD
+
 #ifdef CACHING_ABC
 // ABC TLVs
 #define NDN_TLV_Centrality              0x60
@@ -137,6 +143,9 @@ struct ccnl_ndntlv_interest_opts_s {
 #ifdef CACHING_ABC
     uint16_t centrality;
 #endif //CACHING_ABC
+#ifdef CACHING_LCD
+    uint8_t tsb;                /**< Time Since Birth */
+#endif //CACHING_LCD
 };
 
 /**
@@ -151,6 +160,9 @@ struct ccnl_ndntlv_data_opts_s {
 #ifdef CACHING_ABC
     uint16_t centrality;
 #endif //CACHING_ABC
+#ifdef CACHING_LCD
+    uint8_t tsb;                /**< Time Since Birth */
+#endif //CACHING_LCD
 };
 
 #ifdef USE_SUITE_NDNTLV

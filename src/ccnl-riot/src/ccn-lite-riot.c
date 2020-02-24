@@ -598,6 +598,9 @@ ccnl_send_interest(struct ccnl_prefix_s *prefix, unsigned char *buf, int buf_len
 #ifdef CACHING_ABC
     default_opts.ndntlv.centrality = 0;
 #endif //CACHING_ABC
+#ifdef CACHING_LCD
+    default_opts.ndntlv.tsb = 1;
+#endif //CACHING_LCD
 
     if (_ccnl_suite != CCNL_SUITE_NDNTLV) {
         printf("Suite not supported by RIOT!\n");
