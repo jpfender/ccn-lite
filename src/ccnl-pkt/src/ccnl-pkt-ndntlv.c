@@ -636,9 +636,6 @@ ccnl_ndntlv_prependInterest(struct ccnl_prefix_s *name, int scope, struct ccnl_n
 
 #ifdef CACHING_ABC
     int cc_offset = *offset;
-    if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_CentralitySrc, opts->src,
-                offset, buf) < 0)
-        return -1;
     if (ccnl_ndntlv_prependNonNegInt(NDN_TLV_CentralityVal,
                 opts->centrality, offset, buf) < 0)
         return -1;
