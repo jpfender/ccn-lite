@@ -1274,3 +1274,20 @@ ccnl_cs_lookup(struct ccnl_relay_s *ccnl, char *prefix)
     }
     return NULL;
 }
+
+struct ccnl_content_s *
+ccnl_cs_oldest(struct ccnl_relay_s *ccnl, uint32_t *age)
+{
+    struct ccnl_content_s *c2, *oldest = NULL;
+
+    for (c2 = ccnl->contents; c2; c2 = c2->next) {
+        if (!(c2->flags & CCNL_CONTENT_FLAGS_STATIC)) {
+            if ((*age == 0) || c2->last_used < *age) {
+                *age = c2->last_used;
+                oldest = c2;
+            }
+        }
+    }
+
+    return oldest;
+}

@@ -284,5 +284,18 @@ ccnl_cs_remove(struct ccnl_relay_s *ccnl, char *prefix);
 struct ccnl_content_s *
 ccnl_cs_lookup(struct ccnl_relay_s *ccnl, char *prefix);
 
+/**
+ * @brief Find oldest content in Content Store
+ *
+ * @param[in]  ccnl     pointer to the current ccnl relay
+ * @param[out] age      age of oldest content
+ *
+ * @return              pointer to oldest content, if found
+ * @return              NULL, if CS empty or all content static
+ *
+*/
+struct ccnl_content_s *
+ccnl_cs_oldest(struct ccnl_relay_s *ccnl, uint32_t *age);
+
 #endif //CCNL_RELAY_H
 /** @} */
