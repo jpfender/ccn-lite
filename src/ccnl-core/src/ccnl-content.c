@@ -37,6 +37,17 @@
 #include <ccnl-logging.h>
 #endif
 
+#include "ccn-lite-riot.h"
+
+extern uint32_t num_ints;
+extern uint32_t num_datas;
+extern uint32_t num_pits;
+extern uint32_t num_cs;
+extern uint32_t num_drops;
+extern uint32_t num_oom;
+extern uint32_t num_repl;
+extern uint32_t cs_age;
+
 // TODO: remove unused ccnl parameter
 struct ccnl_content_s*
 ccnl_content_new(struct ccnl_pkt_s **pkt)
@@ -56,6 +67,21 @@ ccnl_content_new(struct ccnl_pkt_s **pkt)
 
     c = (struct ccnl_content_s *) ccnl_calloc(1, sizeof(struct ccnl_content_s));
     if (!c) {
+
+        num_oom++;
+        printf("oom;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
+        );
+
         printf("ccnl_content_new: calloc failed\n");
         /*if (*pkt) {*/
             /*ccnl_pkt_free(*pkt);*/

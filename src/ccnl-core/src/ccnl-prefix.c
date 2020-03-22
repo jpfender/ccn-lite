@@ -37,6 +37,17 @@
 #include <ccnl-pkt-ccntlv.h>
 #endif //CCNL_LINUXKERNEL
 
+#include "ccn-lite-riot.h"
+
+extern uint32_t num_ints;
+extern uint32_t num_datas;
+extern uint32_t num_pits;
+extern uint32_t num_cs;
+extern uint32_t num_drops;
+extern uint32_t num_oom;
+extern uint32_t num_repl;
+extern uint32_t cs_age;
+
 
 struct ccnl_prefix_s*
 ccnl_prefix_new(char suite, uint32_t cnt)
@@ -510,6 +521,21 @@ ccnl_prefix_to_path_detailed(struct ccnl_prefix_s *pr, int ccntlv_skip,
     */
     char *buf = (char*) ccnl_malloc(CCNL_MAX_PREFIX_SIZE+1);
     if (!buf) {
+
+        num_oom++;
+        printf("oom;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
+        );
+
         DEBUGMSG_CUTL(ERROR, "ccnl_prefix_to_path_detailed: malloc failed, exiting\n");
         return NULL;
     }

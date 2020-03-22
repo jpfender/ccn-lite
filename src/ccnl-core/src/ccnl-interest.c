@@ -47,6 +47,10 @@ extern uint32_t num_ints;
 extern uint32_t num_datas;
 extern uint32_t num_pits;
 extern uint32_t num_cs;
+extern uint32_t num_drops;
+extern uint32_t num_oom;
+extern uint32_t num_repl;
+extern uint32_t cs_age;
 
 struct ccnl_interest_s*
 ccnl_interest_new(struct ccnl_relay_s *ccnl, struct ccnl_face_s *from,
@@ -64,6 +68,22 @@ ccnl_interest_new(struct ccnl_relay_s *ccnl, struct ccnl_face_s *from,
                   ccnl_suite2str((*pkt)->pfx->suite));
 
     if (!i) {
+
+        ccnl_cs_oldest(ccnl, &cs_age);
+        num_oom++;
+        printf("oom;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
+        );
+
         printf("ccnl-interest: ccnl_interest_new calloc failed\n");
         return NULL;
     }
@@ -83,14 +103,19 @@ ccnl_interest_new(struct ccnl_relay_s *ccnl, struct ccnl_face_s *from,
 
     DBL_LINKED_LIST_ADD(ccnl->pit, i);
 
+    ccnl_cs_oldest(ccnl, &cs_age);
     num_pits++;
-    printf("icr;%lu;%hu;%lu;%lu;%lu;%lu\n",
+    printf("icr;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
             (unsigned long) xtimer_now_usec64(),
             my_betw,
             (unsigned long) num_ints,
             (unsigned long) num_datas,
-            (unsigned long)num_pits,
-            (unsigned long)num_cs
+            (unsigned long) num_pits,
+            (unsigned long) num_cs,
+            (unsigned long) num_drops,
+            (unsigned long) num_oom,
+            (unsigned long) num_repl,
+            (unsigned long) CCNL_NOW() - cs_age
     );
 
     ccnl->pitcnt++;

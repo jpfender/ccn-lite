@@ -49,6 +49,10 @@ extern uint32_t num_ints;
 extern uint32_t num_datas;
 extern uint32_t num_pits;
 extern uint32_t num_cs;
+extern uint32_t num_drops;
+extern uint32_t num_oom;
+extern uint32_t num_repl;
+extern uint32_t cs_age;
 
 //#include "ccnl-logging.h"
 
@@ -220,13 +224,18 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
     if (from) {
         char *from_as_str = ccnl_addr2ascii(&(from->peer));
 
-        printf("irx;%lu;%hu;%lu;%lu;%lu;%lu\n",
+        ccnl_cs_oldest(relay, &cs_age);
+        printf("irx;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                 (unsigned long) xtimer_now_usec64(),
                 my_betw,
                 (unsigned long) num_ints,
                 (unsigned long) num_datas,
-                (unsigned long)num_pits,
-                (unsigned long)num_cs
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
         );
 
 #ifndef CCNL_LINUXKERNEL
@@ -311,13 +320,18 @@ ccnl_fwd_handleInterest(struct ccnl_relay_s *relay, struct ccnl_face_s *from,
 
                 ccnl_send_pkt(relay, from, c->pkt);
 
-                printf("pp;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                ccnl_cs_oldest(relay, &cs_age);
+                printf("pp;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                         (unsigned long) xtimer_now_usec64(),
                         my_betw,
                         (unsigned long) num_ints,
                         (unsigned long) num_datas,
-                        (unsigned long)num_pits,
-                        (unsigned long)num_cs
+                        (unsigned long) num_pits,
+                        (unsigned long) num_cs,
+                        (unsigned long) num_drops,
+                        (unsigned long) num_oom,
+                        (unsigned long) num_repl,
+                        (unsigned long) CCNL_NOW() - cs_age
                 );
 
 

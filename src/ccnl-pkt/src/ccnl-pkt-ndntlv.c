@@ -36,6 +36,17 @@
 #include <ccnl-core.h>
 #endif
 
+#include "ccn-lite-riot.h"
+
+extern uint32_t num_ints;
+extern uint32_t num_datas;
+extern uint32_t num_pits;
+extern uint32_t num_cs;
+extern uint32_t num_drops;
+extern uint32_t num_oom;
+extern uint32_t num_repl;
+extern uint32_t cs_age;
+
 
 
 
@@ -123,6 +134,21 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
 
     pkt = (struct ccnl_pkt_s*) ccnl_calloc(1, sizeof(struct ccnl_pkt_s));
     if (!pkt) {
+
+        num_oom++;
+        printf("oom;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
+        );
+
         printf("ccnl_ndntlv_bytes2pkt: ccnl_calloc failed\n");
         return NULL;
     }
@@ -373,6 +399,21 @@ ccnl_ndntlv_bytes2pkt(uint64_t pkttype, uint8_t *start,
     pkt->pfx = prefix;
     pkt->buf = ccnl_buf_new(start, *data - start);
     if (!pkt->buf) {
+
+        num_oom++;
+        printf("oom;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
+        );
+
         printf("ccnl_ndntlv_bytes2pkt: ccnl_buf_new failed\n");
         goto Bail;
     }

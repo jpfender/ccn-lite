@@ -51,6 +51,10 @@ extern uint32_t num_ints;
 extern uint32_t num_datas;
 extern uint32_t num_pits;
 extern uint32_t num_cs;
+extern uint32_t num_drops;
+extern uint32_t num_oom;
+extern uint32_t num_repl;
+extern uint32_t cs_age;
 
 /**
  * @brief May be defined for a particular caching strategy
@@ -222,6 +226,22 @@ ccnl_ll_TX(struct ccnl_relay_s *ccnl, struct ccnl_if_s *ifc,
 
                             if (pkt == NULL) {
                                 printf("error: packet buffer full trying to allocate %d bytes\n", (int)buf->datalen);
+
+                                ccnl_cs_oldest(ccnl, &cs_age);
+                                num_drops++;
+                                printf("dr;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                                        (unsigned long) xtimer_now_usec64(),
+                                        my_betw,
+                                        (unsigned long) num_ints,
+                                        (unsigned long) num_datas,
+                                        (unsigned long) num_pits,
+                                        (unsigned long) num_cs,
+                                        (unsigned long) num_drops,
+                                        (unsigned long) num_oom,
+                                        (unsigned long) num_repl,
+                                        (unsigned long) CCNL_NOW() - cs_age
+                                );
+
                                 return;
                             }
 
@@ -248,6 +268,22 @@ ccnl_ll_TX(struct ccnl_relay_s *ccnl, struct ccnl_if_s *ifc,
 
                             /* check if header building succeeded */
                             if (hdr == NULL) {
+
+                                ccnl_cs_oldest(ccnl, &cs_age);
+                                num_drops++;
+                                printf("dr;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                                        (unsigned long) xtimer_now_usec64(),
+                                        my_betw,
+                                        (unsigned long) num_ints,
+                                        (unsigned long) num_datas,
+                                        (unsigned long) num_pits,
+                                        (unsigned long) num_cs,
+                                        (unsigned long) num_drops,
+                                        (unsigned long) num_oom,
+                                        (unsigned long) num_repl,
+                                        (unsigned long) CCNL_NOW() - cs_age
+                                );
+
                                 puts("error: packet buffer full trying to allocate netif_hdr");
                                 gnrc_pktbuf_release(pkt);
                                 return;
@@ -283,6 +319,22 @@ ccnl_ll_TX(struct ccnl_relay_s *ccnl, struct ccnl_if_s *ifc,
                             DEBUGMSG(DEBUG, " try to pass to GNRC (%i): %p\n", (int) ifc->if_pid, (void*) pkt);
                             if (gnrc_netapi_send(ifc->if_pid, pkt) < 1) {
                                 puts("error: unable to send\n");
+
+                                ccnl_cs_oldest(ccnl, &cs_age);
+                                num_drops++;
+                                printf("dr;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                                        (unsigned long) xtimer_now_usec64(),
+                                        my_betw,
+                                        (unsigned long) num_ints,
+                                        (unsigned long) num_datas,
+                                        (unsigned long) num_pits,
+                                        (unsigned long) num_cs,
+                                        (unsigned long) num_drops,
+                                        (unsigned long) num_oom,
+                                        (unsigned long) num_repl,
+                                        (unsigned long) CCNL_NOW() - cs_age
+                                );
+
                                 gnrc_pktbuf_release(pkt);
                                 return;
                             }
@@ -314,17 +366,38 @@ ccnl_app_RX(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
                                       GNRC_NETREG_DEMUX_CTX_ALL, pkt)) {
         DEBUGMSG(DEBUG, "ccn-lite: unable to forward packet as no one is \
                  interested in it\n");
+
+        ccnl_cs_oldest(ccnl, &cs_age);
+        num_drops++;
+        printf("dr;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
+        );
+
         gnrc_pktbuf_release(pkt);
     }
 
+    ccnl_cs_oldest(ccnl, &cs_age);
     num_datas++;
-    printf("arx;%lu;%hu;%lu;%lu;%lu;%lu\n",
+    printf("arx;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
             (unsigned long) xtimer_now_usec64(),
             my_betw,
             (unsigned long) num_ints,
             (unsigned long) num_datas,
-            (unsigned long)num_pits,
-            (unsigned long)num_cs
+            (unsigned long) num_pits,
+            (unsigned long) num_cs,
+            (unsigned long) num_drops,
+            (unsigned long) num_oom,
+            (unsigned long) num_repl,
+            (unsigned long) CCNL_NOW() - cs_age
     );
 
     return 0;
@@ -417,14 +490,19 @@ void
                 DEBUGMSG(DEBUG, "ccn-lite: GNRC_NETAPI_MSG_TYPE_SND received\n");
                 pkt = (struct ccnl_pkt_s *) m.content.ptr;
 
+                ccnl_cs_oldest(ccnl, &cs_age);
                 num_ints++;
-                printf("q;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                printf("q;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                         (unsigned long) xtimer_now_usec64(),
                         my_betw,
                         (unsigned long) num_ints,
                         (unsigned long) num_datas,
-                        (unsigned long)num_pits,
-                        (unsigned long)num_cs
+                        (unsigned long) num_pits,
+                        (unsigned long) num_cs,
+                        (unsigned long) num_drops,
+                        (unsigned long) num_oom,
+                        (unsigned long) num_repl,
+                        (unsigned long) CCNL_NOW() - cs_age
                 );
 
                 ccnl_fwd_handleInterest(ccnl, loopback_face, &pkt, ccnl_ndntlv_cMatch);
@@ -483,14 +561,19 @@ void
             case CCNL_MSG_INT_TIMEOUT:
                 ccnl_int = (struct ccnl_interest_s *)m.content.ptr;
 
+                ccnl_cs_oldest(ccnl, &cs_age);
                 num_pits--;
-                printf("idel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                printf("idel;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                         (unsigned long) xtimer_now_usec64(),
                         my_betw,
                         (unsigned long) num_ints,
                         (unsigned long) num_datas,
                         (unsigned long)num_pits,
-                        (unsigned long)num_cs
+                        (unsigned long)num_cs,
+                        (unsigned long)num_drops,
+                        (unsigned long) num_oom,
+                        (unsigned long) num_repl,
+                        (unsigned long) CCNL_NOW() - cs_age
                 );
 
                 ccnl_interest_remove(ccnl, ccnl_int);

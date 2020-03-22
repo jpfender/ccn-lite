@@ -45,6 +45,10 @@ extern uint32_t num_ints;
 extern uint32_t num_datas;
 extern uint32_t num_pits;
 extern uint32_t num_cs;
+extern uint32_t num_drops;
+extern uint32_t num_oom;
+extern uint32_t num_repl;
+extern uint32_t cs_age;
 
 struct ccnl_face_s*
 ccnl_get_face_or_create(struct ccnl_relay_s *ccnl, int ifndx,
@@ -164,14 +168,19 @@ ccnl_face_remove(struct ccnl_relay_s *ccnl, struct ccnl_face_s *f)
             DEBUGMSG_CORE(TRACE, "before interest_remove 0x%p\n",
                           (void*)pit);
 
+            ccnl_cs_oldest(ccnl, &cs_age);
             num_pits--;
-            printf("idel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+            printf("idel;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                     (unsigned long) xtimer_now_usec64(),
                     my_betw,
                     (unsigned long) num_ints,
                     (unsigned long) num_datas,
-                    (unsigned long)num_pits,
-                    (unsigned long)num_cs
+                    (unsigned long) num_pits,
+                    (unsigned long) num_cs,
+                    (unsigned long) num_drops,
+                    (unsigned long) num_oom,
+                    (unsigned long) num_repl,
+                    (unsigned long) CCNL_NOW() - cs_age
             );
 
             pit = ccnl_interest_remove(ccnl, pit);
@@ -223,6 +232,22 @@ ccnl_interface_enqueue(void (tx_done)(void*, int, int), struct ccnl_face_s *f,
         if (ifc->qlen >= CCNL_MAX_IF_QLEN) {
             if (buf) {
                 printf("  DROPPING buf=%p\n", (void*)buf);
+
+                ccnl_cs_oldest(ccnl, &cs_age);
+                num_drops++;
+                printf("dr;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                        (unsigned long) xtimer_now_usec64(),
+                        my_betw,
+                        (unsigned long) num_ints,
+                        (unsigned long) num_datas,
+                        (unsigned long) num_pits,
+                        (unsigned long) num_cs,
+                        (unsigned long) num_drops,
+                        (unsigned long) num_oom,
+                        (unsigned long) num_repl,
+                        (unsigned long) CCNL_NOW() - cs_age
+                );
+
                 ccnl_free(buf);
                 return;
             }
@@ -321,6 +346,22 @@ ccnl_face_enqueue(struct ccnl_relay_s *ccnl, struct ccnl_face_s *to,
     printf("ccnl_face_enqueue()\n");
     struct ccnl_buf_s *msg;
     if (buf == NULL) {
+
+        ccnl_cs_oldest(ccnl, &cs_age);
+        num_drops++;
+        printf("dr;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                (unsigned long) xtimer_now_usec64(),
+                my_betw,
+                (unsigned long) num_ints,
+                (unsigned long) num_datas,
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
+        );
+
         printf("enqueue face: buf most not be NULL\n");
         return -1;
     }
@@ -518,13 +559,18 @@ ccnl_interest_propagate(struct ccnl_relay_s *ccnl, struct ccnl_interest_s *i)
                 ccnl_send_pkt(ccnl, fwd->face, i->pkt);
 
                 if (i->from != loopback_face) {
-                    printf("ip;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                    ccnl_cs_oldest(ccnl, &cs_age);
+                    printf("ip;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                             (unsigned long) xtimer_now_usec64(),
                             my_betw,
                             (unsigned long) num_ints,
                             (unsigned long) num_datas,
-                            (unsigned long)num_pits,
-                            (unsigned long)num_cs
+                            (unsigned long) num_pits,
+                            (unsigned long) num_cs,
+                            (unsigned long) num_drops,
+                            (unsigned long) num_oom,
+                            (unsigned long) num_repl,
+                            (unsigned long) CCNL_NOW() - cs_age
                     );
                 }
 
@@ -631,14 +677,19 @@ ccnl_content_remove(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
     evtimer_del((evtimer_t *)(&ccnl_evtimer), (evtimer_event_t *)&c->evtmsg_cstimeout);
 #endif
 
+    ccnl_cs_oldest(ccnl, &cs_age);
     num_cs--;
-    printf("cdel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+    printf("cdel;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
             (unsigned long) xtimer_now_usec64(),
             my_betw,
             (unsigned long) num_ints,
             (unsigned long) num_datas,
-            (unsigned long)num_pits,
-            (unsigned long)num_cs
+            (unsigned long) num_pits,
+            (unsigned long) num_cs,
+            (unsigned long) num_drops,
+            (unsigned long) num_oom,
+            (unsigned long) num_repl,
+            (unsigned long) CCNL_NOW() - cs_age
     );
 
     return c2;
@@ -674,34 +725,64 @@ ccnl_content_add2cache(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 
     if (ccnl->max_cache_entries > 0 &&
         ccnl->contentcnt >= ccnl->max_cache_entries) { // remove oldest content
-        struct ccnl_content_s *c2, *oldest = NULL;
+
         uint32_t age = 0;
+
+        struct ccnl_content_s *c2, *oldest2 = NULL;
         for (c2 = ccnl->contents; c2; c2 = c2->next) {
-             if (!(c2->flags & CCNL_CONTENT_FLAGS_STATIC)) {
-                 if ((age == 0) || c2->last_used < age) {
-                     age = c2->last_used;
-                     oldest = c2;
-                 }
-             }
+            if (!(c2->flags & CCNL_CONTENT_FLAGS_STATIC)) {
+                if ((age == 0) || c2->last_used < age) {
+                    age = c2->last_used;
+                    oldest2 = c2;
+                }
+            }
          }
-         if (oldest) {
-             printf(" remove old entry from cache\n");
-             ccnl_content_remove(ccnl, oldest);
-         }
+
+        struct ccnl_content_s *oldest = ccnl_cs_oldest(ccnl, &cs_age);
+
+        if (oldest2) {
+
+            if (oldest != oldest2) {
+                printf("[E] OLDEST NOT WORKING PROPERLY\n");
+            }
+
+            printf(" remove old entry from cache\n");
+
+            num_repl++;
+            printf("repl;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
+                    (unsigned long) xtimer_now_usec64(),
+                    my_betw,
+                    (unsigned long) num_ints,
+                    (unsigned long) num_datas,
+                    (unsigned long) num_pits,
+                    (unsigned long) num_cs,
+                    (unsigned long) num_drops,
+                    (unsigned long) num_oom,
+                    (unsigned long) num_repl,
+                    (unsigned long) CCNL_NOW() - cs_age
+            );
+
+            ccnl_content_remove(ccnl, oldest2);
+        }
     }
     if ((ccnl->max_cache_entries <= 0) ||
          (ccnl->contentcnt <= ccnl->max_cache_entries)) {
             DBL_LINKED_LIST_ADD(ccnl->contents, c);
             ccnl->contentcnt++;
 
+            ccnl_cs_oldest(ccnl, &cs_age);
             num_cs++;
-            printf("ca;%lu;%hu;%lu;%lu;%lu;%lu\n",
+            printf("cs;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                     (unsigned long) xtimer_now_usec64(),
                     my_betw,
                     (unsigned long) num_ints,
                     (unsigned long) num_datas,
-                    (unsigned long)num_pits,
-                    (unsigned long)num_cs
+                    (unsigned long) num_pits,
+                    (unsigned long) num_cs,
+                    (unsigned long) num_drops,
+                    (unsigned long) num_oom,
+                    (unsigned long) num_repl,
+                    (unsigned long) CCNL_NOW() - cs_age
             );
 
 #ifdef CCNL_RIOT
@@ -824,14 +905,19 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
             DEBUGMSG_CORE(WARNING, "releasing interest 0x%p OK?\n", (void*)i);
             c->flags |= CCNL_CONTENT_FLAGS_STATIC;
 
+            ccnl_cs_oldest(ccnl, &cs_age);
             num_pits--;
-            printf("idel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+            printf("idel;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                     (unsigned long) xtimer_now_usec64(),
                     my_betw,
                     (unsigned long) num_ints,
                     (unsigned long) num_datas,
                     (unsigned long)num_pits,
-                    (unsigned long)num_cs
+                    (unsigned long)num_cs,
+                    (unsigned long)num_drops,
+                    (unsigned long) num_oom,
+                    (unsigned long) num_repl,
+                    (unsigned long) CCNL_NOW() - cs_age
             );
 
             i = ccnl_interest_remove(ccnl, i);
@@ -882,13 +968,18 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
 
                 ccnl_send_pkt(ccnl, pi->face, c->pkt);
 
-                printf("csp;%lu;%hu;%lu;%lu;%lu;%lu\n",
+                ccnl_cs_oldest(ccnl, &cs_age);
+                printf("csp;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                     (unsigned long) xtimer_now_usec64(),
                     my_betw,
                     (unsigned long) num_ints,
                     (unsigned long) num_datas,
                     (unsigned long)num_pits,
-                    (unsigned long)num_cs
+                    (unsigned long)num_cs,
+                    (unsigned long)num_drops,
+                    (unsigned long) num_oom,
+                    (unsigned long) num_repl,
+                    (unsigned long) CCNL_NOW() - cs_age
                 );
 
             } else {// upcall to deliver content to local client
@@ -900,14 +991,19 @@ ccnl_content_serve_pending(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
             cnt++;
         }
 
+        ccnl_cs_oldest(ccnl, &cs_age);
         num_pits--;
-        printf("idel;%lu;%hu;%lu;%lu;%lu;%lu\n",
+        printf("idel;%lu;%hu;%lu;%lu;%lu;%lu;%lu;%lu;%lu;%lu\n",
                 (unsigned long) xtimer_now_usec64(),
                 my_betw,
                 (unsigned long) num_ints,
                 (unsigned long) num_datas,
-                (unsigned long)num_pits,
-                (unsigned long)num_cs
+                (unsigned long) num_pits,
+                (unsigned long) num_cs,
+                (unsigned long) num_drops,
+                (unsigned long) num_oom,
+                (unsigned long) num_repl,
+                (unsigned long) CCNL_NOW() - cs_age
         );
 
         i = ccnl_interest_remove(ccnl, i);
