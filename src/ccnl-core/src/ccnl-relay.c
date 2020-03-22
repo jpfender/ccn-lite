@@ -1317,10 +1317,6 @@ ccnl_cs_add(struct ccnl_relay_s *ccnl, struct ccnl_content_s *c)
         return 0;
     }
 
-    /*if (c) {*/
-        /*ccnl_content_free(c);*/
-    /*}*/
-
     return -1;
 }
 

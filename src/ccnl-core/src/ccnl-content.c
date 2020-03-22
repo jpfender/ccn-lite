@@ -83,9 +83,6 @@ ccnl_content_new(struct ccnl_pkt_s **pkt)
         );
 
         printf("ccnl_content_new: calloc failed\n");
-        /*if (*pkt) {*/
-            /*ccnl_pkt_free(*pkt);*/
-        /*}*/
         return NULL;
     }
     c->pkt = *pkt;
